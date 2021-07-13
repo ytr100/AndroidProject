@@ -9,11 +9,13 @@ import com.example.androidproject.MyApplication;
 @Database(entities = {User.class, Post.class, Comment.class}, version = 1)
 abstract class AppLocalDbRepository extends RoomDatabase {
     public abstract UserDao userDao();
+
     public abstract PostDao postDao();
+
     public abstract CommentDao commentDao();
 }
 
-public class AppLocalDB{
+public class AppLocalDB {
     final static public AppLocalDbRepository db =
             Room.databaseBuilder(MyApplication.context,
                     AppLocalDbRepository.class,
