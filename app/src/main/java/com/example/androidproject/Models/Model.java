@@ -1,7 +1,11 @@
 package com.example.androidproject.Models;
 
+import android.graphics.Bitmap;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
+import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -22,6 +26,22 @@ public class Model {
     public MutableLiveData<LoadingState> commentsLoadingState = new MutableLiveData<>(LoadingState.loaded);
 
     private Model() {
+    }
+
+    public User getUserByUsername(String username) {
+        return ModelFirebase.getUserByUsername(username);
+    }
+
+    public static void signOutUser() {
+        ModelFirebase.signOutUser();
+    }
+
+    public static void signUpUser(String username, String password, ModelFirebase.onAuthenticationResult onComplete) {
+        ModelFirebase.signUpUser(username, password, onComplete);
+    }
+
+    public static void signInUser(String username, String password, ModelFirebase.onAuthenticationResult onComplete) {
+        ModelFirebase.signInUser(username, password, onComplete);
     }
 
     public LiveData<List<User>> getAllUsers() {
@@ -120,5 +140,12 @@ public class Model {
         void onComplete();
     }
 
+    public interface UploadImageListener {
+        void onComplete(String url);
+    }
+
+    public void uploadImage(Bitmap imageBmp, String name, final UploadImageListener listener) {
+        ModelFirebase.uploadImage(imageBmp, name, listener);
+    }
 
 }

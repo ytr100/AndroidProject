@@ -1,11 +1,24 @@
 package com.example.androidproject.Models;
 
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.util.Log;
+import android.view.Display;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.Timestamp;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.UserProfileChangeRequest;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -21,6 +34,50 @@ public class ModelFirebase {
     public interface GetAllListener<T> {
         public void onComplete(List<T> entities);
     }
+
+    public interface onAuthenticationResult {
+        public void execute(String username);
+    }
+
+    public static void signOutUser(){
+        FirebaseAuth.getInstance().signOut();
+    }
+
+    public static void signUpUser(String username, String password, onAuthenticationResult onComplete) {
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+
+        auth.createUserWithEmailAndPassword(username, password)
+                .addOnFailureListener(e -> onComplete.execute(null))
+                .addOnSuccessListener(authResult -> onComplete.execute(username));
+    }
+
+    public static void signInUser(String username, String password, onAuthenticationResult onComplete) {
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+
+        auth.signInWithEmailAndPassword(username, password)
+                .addOnFailureListener(e -> onComplete.execute(null))
+                .addOnSuccessListener(authResult -> onComplete.execute(username));
+    }
+
+    public static User getUserByUsername(String username){
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+       return User.fromJson(db.collection(userCollection).whereEqualTo(User.USERNAME, username)
+               .get().getResult().getDocuments().get(0).getData());
+    }
+
+    public static void uploadImage(Bitmap imageBmp, String name, final Model.UploadImageListener listener) {
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        final StorageReference imagesRef = storage.getReference().child("photos").child(name);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        imageBmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
+        UploadTask uploadTask = imagesRef.putBytes(data);
+        uploadTask.addOnFailureListener(e -> listener.onComplete(null))
+                .addOnSuccessListener(taskSnapshot -> imagesRef.getDownloadUrl()
+                        .addOnSuccessListener(uri -> listener.onComplete(uri.toString())));
+    }
+
 
     public static void getAllUsers(Long since, GetAllListener<User> listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
