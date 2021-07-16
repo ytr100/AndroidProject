@@ -17,12 +17,12 @@ import java.util.Map;
 @Entity
 public class User {
 
-    final private static String USERNAME = "username";
-    final private static String EMAIL = "email";
-    final private static String PHOTO = "photo";
-    final private static String LAST_UPDATED = "lastUpdated";
+    final public static String USERNAME = "username";
+    final public static String EMAIL = "email";
+    final public static String PHOTO = "photo";
+    final public static String LAST_UPDATED = "lastUpdated";
 
-    final private static String LOCAL_LAST_UPDATED = "userLastUpdated";
+    final public static String LOCAL_LAST_UPDATED = "userLastUpdated";
 
     @PrimaryKey
     @NonNull
@@ -38,11 +38,11 @@ public class User {
         editor.commit();
     }
 
-    public static Long getLocal_lastUpdated(Long ts) {
+    public static Long getLocal_lastUpdated() {
         return MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).getLong(LOCAL_LAST_UPDATED, 0);
     }
 
-    public User fromJson(Map<String, Object> json) {
+    public static User fromJson(Map<String, Object> json) {
         User user = new User();
         user.setUsername((String) json.get(USERNAME));
         user.setEmail((String) json.get(EMAIL));

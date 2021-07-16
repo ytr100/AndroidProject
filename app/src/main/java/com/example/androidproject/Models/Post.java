@@ -1,8 +1,15 @@
 package com.example.androidproject.Models;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
+
+import com.example.androidproject.MyApplication;
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.FieldValue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,28 +17,47 @@ import java.util.Map;
 @Entity
 public class Post {
 
-    final private static String ID = "postID";
-    final private static String TITLE = "postTitle";
-    final private static String CONTENT = "postContent";
-    final private static String LIKES = "postLikes";
-    final private static String USERNAME = "postUsername";
+    final public static String ID = "postID";
+    final public static String TITLE = "postTitle";
+    final public static String CONTENT = "postContent";
+    final public static String LIKES = "postLikes";
+    final public static String USERNAME = "postUsername";
+    final public static String LAST_UPDATED = "lastUpdated";
+
+    final public static String LOCAL_LAST_UPDATED = "postLastUpdated";
     @PrimaryKey
     @NonNull
     private String postID;
     private String postTitle;
     private String postContent;
     private int postLikes; //maybe initialize to 0
+    private Long lastUpdated;
     //foreign key
     @NonNull
     private String postUsername;
 
-    static public Post fromJson(Map<String, Object> json) {
+    public static void setLocal_lastUpdated(Long ts) {
+        SharedPreferences.Editor editor = MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
+        editor.putLong(LOCAL_LAST_UPDATED, ts);
+        editor.commit();
+    }
+
+    public static Long getLocal_lastUpdated() {
+        return MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).getLong(LOCAL_LAST_UPDATED, 0);
+    }
+
+    public static Post fromJson(Map<String, Object> json) {
         Post post = new Post();
         post.setPostID((String) json.get(ID));
         post.setPostTitle((String) json.get(TITLE));
         post.setPostContent((String) json.get(CONTENT));
         post.setPostLikes(Integer.parseInt((String) json.get(LIKES)));
         post.setPostUsername((String) json.get(USERNAME));
+        Timestamp ts = (Timestamp) json.get(LAST_UPDATED);
+        if (ts != null)
+            post.setLastUpdated(ts.getSeconds());
+        else
+            post.setLastUpdated(0L);
         return post;
     }
 
@@ -42,6 +68,7 @@ public class Post {
         json.put(CONTENT, this.postContent);
         json.put(LIKES, this.postLikes);
         json.put(USERNAME, this.postUsername);
+        json.put(LAST_UPDATED, FieldValue.serverTimestamp());
         return json;
     }
 
@@ -85,5 +112,13 @@ public class Post {
 
     public void setPostUsername(@NonNull String postUsername) {
         this.postUsername = postUsername;
+    }
+
+    public Long getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(Long lastUpdated) {
+        this.lastUpdated = lastUpdated;
     }
 }
