@@ -27,6 +27,7 @@ public class ModelFirebase {
     final private static String userCollection = "users";
     final private static String postCollection = "posts";
     final private static String commentCollection = "comments";
+    final private static FirebaseAuth auth = FirebaseAuth.getInstance();
 
     private ModelFirebase() {
     }
@@ -36,34 +37,38 @@ public class ModelFirebase {
     }
 
     public interface onAuthenticationResult {
-        public void execute(String username);
+        public void execute(String email);
     }
 
-    public static void signOutUser(){
+    public static void signOutUser() {
         FirebaseAuth.getInstance().signOut();
     }
 
-    public static void signUpUser(String username, String password, onAuthenticationResult onComplete) {
-        FirebaseAuth auth = FirebaseAuth.getInstance();
+    public static void signUpUser(String email, String password, onAuthenticationResult onComplete, onAuthenticationResult onError) {
 
-        auth.createUserWithEmailAndPassword(username, password)
-                .addOnFailureListener(e -> onComplete.execute(null))
-                .addOnSuccessListener(authResult -> onComplete.execute(username));
+        auth.createUserWithEmailAndPassword(email, password)
+                .addOnFailureListener(e -> {
+                    onError.execute(email);
+                    Log.d("TAG", e.getMessage());
+                })
+                .addOnSuccessListener(authResult -> {
+                    FirebaseUser user = auth.getCurrentUser();
+                    onComplete.execute(email);
+                });
     }
 
-    public static void signInUser(String username, String password, onAuthenticationResult onComplete) {
-        FirebaseAuth auth = FirebaseAuth.getInstance();
+    public static void signInUser(String email, String password, onAuthenticationResult onComplete, onAuthenticationResult onError) {
 
-        auth.signInWithEmailAndPassword(username, password)
-                .addOnFailureListener(e -> onComplete.execute(null))
-                .addOnSuccessListener(authResult -> onComplete.execute(username));
+        auth.signInWithEmailAndPassword(email, password)
+                .addOnFailureListener(e -> onError.execute(email))
+                .addOnSuccessListener(authResult -> onComplete.execute(email));
     }
 
-    public static User getUserByUsername(String username){
+    public static User getUserByUsername(String username) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-       return User.fromJson(db.collection(userCollection).whereEqualTo(User.USERNAME, username)
-               .get().getResult().getDocuments().get(0).getData());
+        return User.fromJson(db.collection(userCollection).whereEqualTo(User.USERNAME, username)
+                .get().getResult().getDocuments().get(0).getData());
     }
 
     public static void uploadImage(Bitmap imageBmp, String name, final Model.UploadImageListener listener) {

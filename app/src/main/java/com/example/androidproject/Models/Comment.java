@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
+import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
 
 import com.example.androidproject.MyApplication;
@@ -14,7 +15,10 @@ import com.google.firebase.firestore.FieldValue;
 import java.util.HashMap;
 import java.util.Map;
 
-@Entity
+@Entity(foreignKeys = {@ForeignKey(entity = Post.class,
+        parentColumns = "postID",
+        childColumns = "postID",
+        onDelete = ForeignKey.CASCADE)})
 public class Comment {
 
     final public static String ID = "commentID";
@@ -22,6 +26,7 @@ public class Comment {
     final public static String CONTENT = "commentContent";
     final public static String LIKES = "commentLikes";
     final public static String POST_ID = "postID";
+    final public static String PARENT_COMMENT_ID = "parentCommentID";
     final public static String LAST_UPDATED = "lastUpdated";
 
     final public static String LOCAL_LAST_UPDATED = "commentLastUpdated";
@@ -32,14 +37,18 @@ public class Comment {
     private String commentContent;
     private int commentLikes;  //maybe initialize to 0
     private Long lastUpdated;
+
     //foreign key
     @NonNull
     private String postID;
 
+    private String parentCommentID;
+
+
     public static void setLocal_lastUpdated(Long ts) {
         SharedPreferences.Editor editor = MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
         editor.putLong(LOCAL_LAST_UPDATED, ts);
-        editor.commit();
+        editor.apply();
     }
 
     public static Long getLocal_lastUpdated() {
@@ -53,6 +62,7 @@ public class Comment {
         comment.setCommentContent((String) json.get(CONTENT));
         comment.setCommentLikes(Integer.parseInt((String) json.get(LIKES)));
         comment.setPostID((String) json.get(POST_ID));
+        comment.setParentCommentID((String) json.get(PARENT_COMMENT_ID));
         Timestamp ts = (Timestamp) json.get(LAST_UPDATED);
         if (ts != null)
             comment.setLastUpdated(ts.getSeconds());
@@ -68,6 +78,7 @@ public class Comment {
         json.put(CONTENT, this.commentContent);
         json.put(LIKES, this.commentLikes);
         json.put(POST_ID, this.postID);
+        json.put(PARENT_COMMENT_ID, this.parentCommentID);
         json.put(LAST_UPDATED, FieldValue.serverTimestamp());
         return json;
     }
@@ -121,4 +132,13 @@ public class Comment {
     public void setLastUpdated(Long lastUpdated) {
         this.lastUpdated = lastUpdated;
     }
+
+    public String getParentCommentID() {
+        return parentCommentID;
+    }
+
+    public void setParentCommentID(String parentCommentID) {
+        this.parentCommentID = parentCommentID;
+    }
+
 }

@@ -5,9 +5,7 @@ import android.graphics.Bitmap;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
-import com.google.firebase.auth.FirebaseAuth;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,12 +34,12 @@ public class Model {
         ModelFirebase.signOutUser();
     }
 
-    public static void signUpUser(String username, String password, ModelFirebase.onAuthenticationResult onComplete) {
-        ModelFirebase.signUpUser(username, password, onComplete);
+    public static void signUpUser(String email, String password, ModelFirebase.onAuthenticationResult onComplete, ModelFirebase.onAuthenticationResult onError) {
+        ModelFirebase.signUpUser(email, password, onComplete, onError);
     }
 
-    public static void signInUser(String username, String password, ModelFirebase.onAuthenticationResult onComplete) {
-        ModelFirebase.signInUser(username, password, onComplete);
+    public static void signInUser(String email, String password, ModelFirebase.onAuthenticationResult onComplete, ModelFirebase.onAuthenticationResult onError) {
+        ModelFirebase.signInUser(email, password, onComplete, onError);
     }
 
     public LiveData<List<User>> getAllUsers() {

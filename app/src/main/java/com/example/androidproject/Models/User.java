@@ -35,7 +35,7 @@ public class User {
     public static void setLocal_lastUpdated(Long ts) {
         SharedPreferences.Editor editor = MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
         editor.putLong(LOCAL_LAST_UPDATED, ts);
-        editor.commit();
+        editor.apply();
     }
 
     public static Long getLocal_lastUpdated() {

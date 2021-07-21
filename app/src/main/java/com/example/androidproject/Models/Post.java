@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
+import androidx.room.ForeignKey;
 import androidx.room.PrimaryKey;
 
 import com.example.androidproject.MyApplication;
@@ -14,7 +15,10 @@ import com.google.firebase.firestore.FieldValue;
 import java.util.HashMap;
 import java.util.Map;
 
-@Entity
+@Entity(foreignKeys = {@ForeignKey(entity = User.class,
+        parentColumns = "username",
+        childColumns = "postUsername",
+        onDelete = ForeignKey.CASCADE)})
 public class Post {
 
     final public static String ID = "postID";
@@ -39,7 +43,7 @@ public class Post {
     public static void setLocal_lastUpdated(Long ts) {
         SharedPreferences.Editor editor = MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
         editor.putLong(LOCAL_LAST_UPDATED, ts);
-        editor.commit();
+        editor.apply();
     }
 
     public static Long getLocal_lastUpdated() {
