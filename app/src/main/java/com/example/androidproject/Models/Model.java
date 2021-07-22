@@ -71,6 +71,11 @@ public class Model {
         });
     }
 
+    public void deleteUser(User user, OnCompleteListener listener){
+        usersLoadingState.setValue(LoadingState.loading);
+        ModelFirebase.deleteUser(user,listener);
+    }
+
     public LiveData<List<Post>> getAllPosts() {
         postsLoadingState.setValue(LoadingState.loading);
         Long localLastUpdated = Post.getLocal_lastUpdated();
@@ -100,6 +105,11 @@ public class Model {
         });
     }
 
+    public void deletePost(Post post, OnCompleteListener listener){
+        usersLoadingState.setValue(LoadingState.loading);
+        ModelFirebase.deletePost(post,listener);
+    }
+
     public LiveData<List<Comment>> getAllComments() {
         commentsLoadingState.setValue(LoadingState.loading);
         Long localLastUpdated = Comment.getLocal_lastUpdated();
@@ -126,6 +136,11 @@ public class Model {
             getAllComments();
             listener.onComplete();
         });
+    }
+
+    public void deleteComment(Comment comment, OnCompleteListener listener){
+        usersLoadingState.setValue(LoadingState.loading);
+        ModelFirebase.deleteComment(comment,listener);
     }
 
     public enum LoadingState {

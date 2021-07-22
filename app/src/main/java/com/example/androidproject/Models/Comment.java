@@ -28,6 +28,7 @@ public class Comment {
     final public static String POST_ID = "postID";
     final public static String PARENT_COMMENT_ID = "parentCommentID";
     final public static String LAST_UPDATED = "lastUpdated";
+    final public static String IS_DELETED = "isDeleted";
 
     final public static String LOCAL_LAST_UPDATED = "commentLastUpdated";
     @PrimaryKey
@@ -37,6 +38,7 @@ public class Comment {
     private String commentContent;
     private int commentLikes;  //maybe initialize to 0
     private Long lastUpdated;
+    private boolean isDeleted;
 
     //foreign key
     @NonNull
@@ -68,6 +70,7 @@ public class Comment {
             comment.setLastUpdated(ts.getSeconds());
         else
             comment.setLastUpdated(0L);
+        comment.setDeleted((boolean) json.get(IS_DELETED));
         return comment;
     }
 
@@ -80,6 +83,7 @@ public class Comment {
         json.put(POST_ID, this.postID);
         json.put(PARENT_COMMENT_ID, this.parentCommentID);
         json.put(LAST_UPDATED, FieldValue.serverTimestamp());
+        json.put(IS_DELETED, this.isDeleted);
         return json;
     }
 
@@ -139,6 +143,14 @@ public class Comment {
 
     public void setParentCommentID(String parentCommentID) {
         this.parentCommentID = parentCommentID;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 
 }
