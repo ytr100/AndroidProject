@@ -87,6 +87,7 @@ public class ModelFirebase {
     public static void getAllUsers(Long since, GetAllListener<User> listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection(userCollection)
+                .whereEqualTo(User.IS_DELETED, false)
                 .whereGreaterThanOrEqualTo(User.LAST_UPDATED, new Timestamp(since, 0))
                 .get()
                 .addOnCompleteListener(task -> {
@@ -110,10 +111,19 @@ public class ModelFirebase {
                 .addOnFailureListener(e -> listener.onComplete());
     }
 
+    public static void deleteUser(User user, Model.OnCompleteListener listener) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        user.setDeleted(true);
+        db.collection(userCollection).document(user.getUsername())
+                .set(user.toJson())
+                .addOnSuccessListener(e -> listener.onComplete())
+                .addOnFailureListener(e -> listener.onComplete());
+    }
 
     public static void getAllPosts(Long since, GetAllListener<Post> listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection(postCollection)
+                .whereEqualTo(Post.IS_DELETED, false)
                 .whereGreaterThanOrEqualTo(Post.LAST_UPDATED, new Timestamp(since, 0))
                 .get()
                 .addOnCompleteListener(task -> {
@@ -137,9 +147,19 @@ public class ModelFirebase {
                 .addOnFailureListener(e -> listener.onComplete());
     }
 
+    public static void deletePost(Post post, Model.OnCompleteListener listener) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        post.setDeleted(true);
+        db.collection(postCollection).document(post.getPostID())
+                .set(post.toJson())
+                .addOnSuccessListener(e -> listener.onComplete())
+                .addOnFailureListener(e -> listener.onComplete());
+    }
+
     public static void getAllComments(Long since, GetAllListener<Comment> listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection(commentCollection)
+                .whereEqualTo(Comment.IS_DELETED, false)
                 .whereGreaterThanOrEqualTo(Comment.LAST_UPDATED, new Timestamp(since, 0))
                 .get()
                 .addOnCompleteListener(task -> {
@@ -163,4 +183,12 @@ public class ModelFirebase {
                 .addOnFailureListener(e -> listener.onComplete());
     }
 
+    public static void deleteComment(Comment comment, Model.OnCompleteListener listener) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        comment.setDeleted(true);
+        db.collection(userCollection).document(comment.getCommentID())
+                .set(comment.toJson())
+                .addOnSuccessListener(e -> listener.onComplete())
+                .addOnFailureListener(e -> listener.onComplete());
+    }
 }

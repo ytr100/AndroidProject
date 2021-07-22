@@ -27,6 +27,7 @@ public class Post {
     final public static String LIKES = "postLikes";
     final public static String USERNAME = "postUsername";
     final public static String LAST_UPDATED = "lastUpdated";
+    final public static String IS_DELETED = "isDeleted";
 
     final public static String LOCAL_LAST_UPDATED = "postLastUpdated";
     @PrimaryKey
@@ -36,6 +37,8 @@ public class Post {
     private String postContent;
     private int postLikes; //maybe initialize to 0
     private Long lastUpdated;
+    private boolean isDeleted;
+
     //foreign key
     @NonNull
     private String postUsername;
@@ -62,6 +65,7 @@ public class Post {
             post.setLastUpdated(ts.getSeconds());
         else
             post.setLastUpdated(0L);
+        post.setDeleted((boolean) json.get(IS_DELETED));
         return post;
     }
 
@@ -73,6 +77,7 @@ public class Post {
         json.put(LIKES, this.postLikes);
         json.put(USERNAME, this.postUsername);
         json.put(LAST_UPDATED, FieldValue.serverTimestamp());
+        json.put(IS_DELETED, this.isDeleted);
         return json;
     }
 
@@ -124,5 +129,13 @@ public class Post {
 
     public void setLastUpdated(Long lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 }

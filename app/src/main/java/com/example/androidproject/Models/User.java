@@ -21,6 +21,7 @@ public class User {
     final public static String EMAIL = "email";
     final public static String PHOTO = "photo";
     final public static String LAST_UPDATED = "lastUpdated";
+    final public static String IS_DELETED = "isDeleted";
 
     final public static String LOCAL_LAST_UPDATED = "userLastUpdated";
 
@@ -30,7 +31,7 @@ public class User {
     private String email;
     private String photo;
     private Long lastUpdated;
-
+    private boolean isDeleted;
 
     public static void setLocal_lastUpdated(Long ts) {
         SharedPreferences.Editor editor = MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
@@ -52,6 +53,7 @@ public class User {
             user.setLastUpdated(ts.getSeconds());
         else
             user.setLastUpdated(0L);
+        user.setDeleted((boolean) json.get(IS_DELETED));
         return user;
     }
 
@@ -61,6 +63,7 @@ public class User {
         json.put(EMAIL, this.email);
         json.put(PHOTO, this.photo);
         json.put(LAST_UPDATED, FieldValue.serverTimestamp());
+        json.put(IS_DELETED, this.isDeleted);
         return json;
     }
 
@@ -97,4 +100,11 @@ public class User {
         this.lastUpdated = lastUpdated;
     }
 
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
+    }
 }
