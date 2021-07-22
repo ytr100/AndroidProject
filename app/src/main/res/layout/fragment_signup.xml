@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".UI.signup">
+    tools:context=".UI.Auth.signup">
 
     <!-- TODO: Update blank fragment layout -->
 
@@ -59,6 +59,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:ems="10"
+        android:hint="at least 6 characters"
         android:inputType="textPassword"
         app:layout_constraintBottom_toBottomOf="@+id/signup_tv_2"
         app:layout_constraintStart_toEndOf="@+id/signup_tv_2"

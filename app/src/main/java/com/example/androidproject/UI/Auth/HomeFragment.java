@@ -1,4 +1,4 @@
-package com.example.androidproject.UI;
+package com.example.androidproject.UI.Auth;
 
 import android.os.Bundle;
 
@@ -64,11 +64,11 @@ public class HomeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_home, container, false);
-        Button btn = view.findViewById(R.id.home_signup_btn);
+        View root = inflater.inflate(R.layout.fragment_home, container, false);
+        Button btn = root.findViewById(R.id.home_signup_btn);
         btn.setOnClickListener(Navigation.createNavigateOnClickListener(R.id.action_HomeFragment_to_signup));
-        Button btn2 = view.findViewById(R.id.home_login_btn);
+        Button btn2 = root.findViewById(R.id.home_login_btn);
         btn2.setOnClickListener(Navigation.createNavigateOnClickListener(R.id.action_HomeFragment_to_login));
-        return view;
+        return root;
     }
 }
