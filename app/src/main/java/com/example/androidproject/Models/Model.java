@@ -75,9 +75,9 @@ public class Model {
         });
     }
 
-    public void deleteUser(User user, OnCompleteListener listener){
+    public void deleteUser(User user, OnCompleteListener listener) {
         usersLoadingState.setValue(LoadingState.loading);
-        ModelFirebase.deleteUser(user,() -> {
+        ModelFirebase.deleteUser(user, () -> {
             getAllUsers();
             listener.onComplete();
         });
@@ -104,6 +104,25 @@ public class Model {
         return allPosts;
     }
 
+    public LiveData<List<Post>> getPostsFromUser(User user) {
+        postsLoadingState.setValue(LoadingState.loading);
+        Long localLastUpdated = Post.getLocal_lastUpdated();
+
+        ModelFirebase.getAllPostFromUser(user, localLastUpdated, posts ->
+                executorService.execute(() -> {
+                    Long lastUpdate = 0L;
+                    for (Post post : posts) {
+                        AppLocalDB.db.postDao().insertAll(post);
+                        if (lastUpdate < post.getLastUpdated())
+                            lastUpdate = post.getLastUpdated();
+                    }
+                    Post.setLocal_lastUpdated(lastUpdate);
+                    postsLoadingState.postValue(LoadingState.loaded);
+                }));
+
+        return allPosts;
+    }
+
     public void savePost(Post post, OnCompleteListener listener) {
         postsLoadingState.setValue(LoadingState.loading);
         ModelFirebase.savePost(post, () -> {
@@ -112,13 +131,14 @@ public class Model {
         });
     }
 
-    public void deletePost(Post post, OnCompleteListener listener){
+    public void deletePost(Post post, OnCompleteListener listener) {
         usersLoadingState.setValue(LoadingState.loading);
-        ModelFirebase.deletePost(post,() -> {
+        ModelFirebase.deletePost(post, () -> {
             getAllPosts();
             listener.onComplete();
         });
     }
+
 
     public LiveData<List<Comment>> getAllComments() {
         commentsLoadingState.setValue(LoadingState.loading);
@@ -140,6 +160,47 @@ public class Model {
         return allComments;
     }
 
+    public LiveData<List<Comment>> getAllCommentsFromPost(Post post) {
+        commentsLoadingState.setValue(LoadingState.loading);
+        Long localLastUpdated = Comment.getLocal_lastUpdated();
+
+        ModelFirebase.getCommentsFromPost(post, localLastUpdated, comments ->
+        {
+            executorService.execute(() -> {
+                Long lastUpdate = 0L;
+                for (Comment comment : comments) {
+                    AppLocalDB.db.commentDao().insertAll(comment);
+                    if (lastUpdate < comment.getLastUpdated())
+                        lastUpdate = comment.getLastUpdated();
+                }
+                Comment.setLocal_lastUpdated(lastUpdate);
+                commentsLoadingState.postValue(LoadingState.loaded);
+            });
+        });
+        return allComments;
+    }
+
+    public LiveData<List<Comment>> getAllCommentsFromParentComment(Comment parentComment) {
+        commentsLoadingState.setValue(LoadingState.loading);
+        Long localLastUpdated = Comment.getLocal_lastUpdated();
+
+        ModelFirebase.getCommentsFromParentComment(parentComment, localLastUpdated, comments ->
+        {
+            executorService.execute(() -> {
+                Long lastUpdate = 0L;
+                for (Comment comment : comments) {
+                    AppLocalDB.db.commentDao().insertAll(comment);
+                    if (lastUpdate < comment.getLastUpdated())
+                        lastUpdate = comment.getLastUpdated();
+                }
+                Comment.setLocal_lastUpdated(lastUpdate);
+                commentsLoadingState.postValue(LoadingState.loaded);
+            });
+        });
+        return allComments;
+    }
+
+
     public void saveComment(Comment comment, OnCompleteListener listener) {
         commentsLoadingState.setValue(LoadingState.loading);
         ModelFirebase.saveComment(comment, () -> {
@@ -148,9 +209,9 @@ public class Model {
         });
     }
 
-    public void deleteComment(Comment comment, OnCompleteListener listener){
+    public void deleteComment(Comment comment, OnCompleteListener listener) {
         commentsLoadingState.setValue(LoadingState.loading);
-        ModelFirebase.deleteComment(comment,() -> {
+        ModelFirebase.deleteComment(comment, () -> {
             getAllComments();
             listener.onComplete();
         });

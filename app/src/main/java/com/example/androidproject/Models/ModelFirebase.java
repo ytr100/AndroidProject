@@ -37,7 +37,6 @@ public class ModelFirebase {
     }
 
 
-
     public static void signOutUser() {
         FirebaseAuth.getInstance().signOut();
     }
@@ -68,19 +67,6 @@ public class ModelFirebase {
         return User.fromJson(db.collection(userCollection).whereEqualTo(User.EMAIL, email)
                 .get().getResult().getDocuments().get(0).getData());
     }
-
-    public static void uploadImage(Bitmap imageBmp, String name, final Model.UploadImageListener listener) {
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-        final StorageReference imagesRef = storage.getReference().child("photos").child(name);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        imageBmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        byte[] data = baos.toByteArray();
-        UploadTask uploadTask = imagesRef.putBytes(data);
-        uploadTask.addOnFailureListener(e -> listener.onComplete(null))
-                .addOnSuccessListener(taskSnapshot -> imagesRef.getDownloadUrl()
-                        .addOnSuccessListener(uri -> listener.onComplete(uri.toString())));
-    }
-
 
     public static void getAllUsers(Long since, GetAllListener<User> listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -136,6 +122,25 @@ public class ModelFirebase {
                 });
     }
 
+    public static void getAllPostFromUser(User user, Long since, GetAllListener<Post> listener) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection(postCollection)
+                .whereEqualTo(Post.IS_DELETED, false)
+                .whereEqualTo(Post.USERNAME, user.getUsername())
+                .whereGreaterThanOrEqualTo(Post.LAST_UPDATED, new Timestamp(since, 0))
+                .get()
+                .addOnCompleteListener(task -> {
+                    List<Post> list = new LinkedList<Post>();
+                    if (task.isSuccessful()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            list.add(Post.fromJson(document.getData()));
+                        }
+                    } else
+                        Log.d("ERROR", "Task is unsuccessful");
+                    listener.onComplete(list);
+                });
+    }
+
 
     public static void savePost(Post post, Model.OnCompleteListener listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -172,6 +177,43 @@ public class ModelFirebase {
                 });
     }
 
+    public static void getCommentsFromPost(Post post,Long since, GetAllListener<Comment> listener) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection(commentCollection)
+                .whereEqualTo(Comment.IS_DELETED, false)
+                .whereEqualTo(Comment.POST_ID, post.getPostID())
+                .whereGreaterThanOrEqualTo(Comment.LAST_UPDATED, new Timestamp(since, 0))
+                .get()
+                .addOnCompleteListener(task -> {
+                    List<Comment> list = new LinkedList<Comment>();
+                    if (task.isSuccessful()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            list.add(Comment.fromJson(document.getData()));
+                        }
+                    } else
+                        Log.d("ERROR", "Task is unsuccessful");
+                    listener.onComplete(list);
+                });
+    }
+
+    public static void getCommentsFromParentComment(Comment parentComment,Long since, GetAllListener<Comment> listener) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection(commentCollection)
+                .whereEqualTo(Comment.IS_DELETED, false)
+                .whereEqualTo(Comment.PARENT_COMMENT_ID, parentComment.getCommentID())
+                .whereGreaterThanOrEqualTo(Comment.LAST_UPDATED, new Timestamp(since, 0))
+                .get()
+                .addOnCompleteListener(task -> {
+                    List<Comment> list = new LinkedList<Comment>();
+                    if (task.isSuccessful()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            list.add(Comment.fromJson(document.getData()));
+                        }
+                    } else
+                        Log.d("ERROR", "Task is unsuccessful");
+                    listener.onComplete(list);
+                });
+    }
 
     public static void saveComment(Comment comment, Model.OnCompleteListener listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -188,5 +230,17 @@ public class ModelFirebase {
                 .set(comment.toJson())
                 .addOnSuccessListener(e -> listener.onComplete())
                 .addOnFailureListener(e -> listener.onComplete());
+    }
+
+    public static void uploadImage(Bitmap imageBmp, String name, final Model.UploadImageListener listener) {
+        FirebaseStorage storage = FirebaseStorage.getInstance();
+        final StorageReference imagesRef = storage.getReference().child("photos").child(name);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        imageBmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] data = baos.toByteArray();
+        UploadTask uploadTask = imagesRef.putBytes(data);
+        uploadTask.addOnFailureListener(e -> listener.onComplete(null))
+                .addOnSuccessListener(taskSnapshot -> imagesRef.getDownloadUrl()
+                        .addOnSuccessListener(uri -> listener.onComplete(uri.toString())));
     }
 }

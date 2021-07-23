@@ -30,6 +30,9 @@ public class Post {
     final public static String IS_DELETED = "isDeleted";
 
     final public static String LOCAL_LAST_UPDATED = "postLastUpdated";
+
+    private static Long IDCounter = 1L;
+
     @PrimaryKey
     @NonNull
     private String postID;
@@ -51,6 +54,21 @@ public class Post {
 
     public static Long getLocal_lastUpdated() {
         return MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).getLong(LOCAL_LAST_UPDATED, 0);
+    }
+
+    public static Post createPost(String title, String content, String postUsername){
+        Map<String, Object> json = new HashMap<>();
+
+        json.put(ID, IDCounter.toString());
+        IDCounter++;
+        json.put(TITLE, title);
+        json.put(CONTENT, content);
+        json.put(LIKES, 0);
+        json.put(USERNAME, postUsername);
+        json.put(LAST_UPDATED, FieldValue.serverTimestamp());
+        json.put(IS_DELETED, false);
+
+        return fromJson(json);
     }
 
     public static Post fromJson(Map<String, Object> json) {
