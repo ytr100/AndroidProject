@@ -26,19 +26,23 @@ public class Model {
     private Model() {
     }
 
-    public User getUserByUsername(String username) {
-        return ModelFirebase.getUserByUsername(username);
+    public interface onAuthenticationResult {
+        public void execute(String email);
+    }
+
+    public User getUserByEmail(String email) {
+        return ModelFirebase.getUserByEmail(email);
     }
 
     public static void signOutUser() {
         ModelFirebase.signOutUser();
     }
 
-    public static void signUpUser(String email, String password, ModelFirebase.onAuthenticationResult onComplete, ModelFirebase.onAuthenticationResult onError) {
+    public void signUpUser(String email, String password, onAuthenticationResult onComplete, onAuthenticationResult onError) {
         ModelFirebase.signUpUser(email, password, onComplete, onError);
     }
 
-    public static void signInUser(String email, String password, ModelFirebase.onAuthenticationResult onComplete, ModelFirebase.onAuthenticationResult onError) {
+    public void signInUser(String email, String password, onAuthenticationResult onComplete, onAuthenticationResult onError) {
         ModelFirebase.signInUser(email, password, onComplete, onError);
     }
 
@@ -73,7 +77,10 @@ public class Model {
 
     public void deleteUser(User user, OnCompleteListener listener){
         usersLoadingState.setValue(LoadingState.loading);
-        ModelFirebase.deleteUser(user,listener);
+        ModelFirebase.deleteUser(user,() -> {
+            getAllUsers();
+            listener.onComplete();
+        });
     }
 
     public LiveData<List<Post>> getAllPosts() {
@@ -107,7 +114,10 @@ public class Model {
 
     public void deletePost(Post post, OnCompleteListener listener){
         usersLoadingState.setValue(LoadingState.loading);
-        ModelFirebase.deletePost(post,listener);
+        ModelFirebase.deletePost(post,() -> {
+            getAllPosts();
+            listener.onComplete();
+        });
     }
 
     public LiveData<List<Comment>> getAllComments() {
@@ -139,8 +149,11 @@ public class Model {
     }
 
     public void deleteComment(Comment comment, OnCompleteListener listener){
-        usersLoadingState.setValue(LoadingState.loading);
-        ModelFirebase.deleteComment(comment,listener);
+        commentsLoadingState.setValue(LoadingState.loading);
+        ModelFirebase.deleteComment(comment,() -> {
+            getAllComments();
+            listener.onComplete();
+        });
     }
 
     public enum LoadingState {
@@ -160,5 +173,4 @@ public class Model {
     public void uploadImage(Bitmap imageBmp, String name, final UploadImageListener listener) {
         ModelFirebase.uploadImage(imageBmp, name, listener);
     }
-
 }

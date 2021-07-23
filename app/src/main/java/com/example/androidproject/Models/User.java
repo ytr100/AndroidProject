@@ -43,6 +43,18 @@ public class User {
         return MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).getLong(LOCAL_LAST_UPDATED, 0);
     }
 
+    public static User createUser(String username, String email) {
+        Map<String, Object> json = new HashMap<>();
+
+        json.put(USERNAME, username);
+        json.put(EMAIL,email);
+        json.put(PHOTO, null);
+        json.put(LAST_UPDATED, FieldValue.serverTimestamp());
+        json.put(IS_DELETED, false);
+
+        return fromJson(json);
+    }
+
     public static User fromJson(Map<String, Object> json) {
         User user = new User();
         user.setUsername((String) json.get(USERNAME));

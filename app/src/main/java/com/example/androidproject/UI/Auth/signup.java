@@ -30,6 +30,7 @@ public class signup extends Fragment {
 
         btn.setOnClickListener(v ->
                 signUpViewModel.signUp(
+                        username.getText().toString(),
                         email.getText().toString(),
                         password.getText().toString(),
                         m -> Snackbar.make(root, "email is good", 5 * 1000).show(),

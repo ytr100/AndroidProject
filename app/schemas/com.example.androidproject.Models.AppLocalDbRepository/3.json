@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 3,
-    "identityHash": "e1510bcd19d0e91ead15a117788e532f",
+    "identityHash": "9ef573a5b22bababb15a51c9c23c8bd5",
     "entities": [
       {
         "tableName": "User",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`username` TEXT NOT NULL, `email` TEXT, `photo` TEXT, `lastUpdated` INTEGER, PRIMARY KEY(`username`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`username` TEXT NOT NULL, `email` TEXT, `photo` TEXT, `lastUpdated` INTEGER, `isDeleted` INTEGER NOT NULL, PRIMARY KEY(`username`))",
         "fields": [
           {
             "fieldPath": "username",
@@ -31,6 +31,12 @@
             "columnName": "lastUpdated",
             "affinity": "INTEGER",
             "notNull": false
+          },
+          {
+            "fieldPath": "isDeleted",
+            "columnName": "isDeleted",
+            "affinity": "INTEGER",
+            "notNull": true
           }
         ],
         "primaryKey": {
@@ -44,7 +50,7 @@
       },
       {
         "tableName": "Post",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`postID` TEXT NOT NULL, `postTitle` TEXT, `postContent` TEXT, `postLikes` INTEGER NOT NULL, `lastUpdated` INTEGER, `postUsername` TEXT NOT NULL, PRIMARY KEY(`postID`), FOREIGN KEY(`postUsername`) REFERENCES `User`(`username`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`postID` TEXT NOT NULL, `postTitle` TEXT, `postContent` TEXT, `postLikes` INTEGER NOT NULL, `lastUpdated` INTEGER, `isDeleted` INTEGER NOT NULL, `postUsername` TEXT NOT NULL, PRIMARY KEY(`postID`), FOREIGN KEY(`postUsername`) REFERENCES `User`(`username`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "postID",
@@ -77,6 +83,12 @@
             "notNull": false
           },
           {
+            "fieldPath": "isDeleted",
+            "columnName": "isDeleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
             "fieldPath": "postUsername",
             "columnName": "postUsername",
             "affinity": "TEXT",
@@ -106,7 +118,7 @@
       },
       {
         "tableName": "Comment",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`commentID` TEXT NOT NULL, `commentTitle` TEXT, `commentContent` TEXT, `commentLikes` INTEGER NOT NULL, `lastUpdated` INTEGER, `postID` TEXT NOT NULL, `parentCommentID` TEXT, PRIMARY KEY(`commentID`), FOREIGN KEY(`postID`) REFERENCES `Post`(`postID`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`commentID` TEXT NOT NULL, `commentTitle` TEXT, `commentContent` TEXT, `commentLikes` INTEGER NOT NULL, `lastUpdated` INTEGER, `isDeleted` INTEGER NOT NULL, `postID` TEXT NOT NULL, `parentCommentID` TEXT, PRIMARY KEY(`commentID`), FOREIGN KEY(`postID`) REFERENCES `Post`(`postID`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "commentID",
@@ -137,6 +149,12 @@
             "columnName": "lastUpdated",
             "affinity": "INTEGER",
             "notNull": false
+          },
+          {
+            "fieldPath": "isDeleted",
+            "columnName": "isDeleted",
+            "affinity": "INTEGER",
+            "notNull": true
           },
           {
             "fieldPath": "postID",
@@ -176,7 +194,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e1510bcd19d0e91ead15a117788e532f')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9ef573a5b22bababb15a51c9c23c8bd5')"
     ]
   }
 }

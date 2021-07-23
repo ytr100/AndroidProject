@@ -36,15 +36,13 @@ public class ModelFirebase {
         public void onComplete(List<T> entities);
     }
 
-    public interface onAuthenticationResult {
-        public void execute(String email);
-    }
+
 
     public static void signOutUser() {
         FirebaseAuth.getInstance().signOut();
     }
 
-    public static void signUpUser(String email, String password, onAuthenticationResult onComplete, onAuthenticationResult onError) {
+    public static void signUpUser(String email, String password, Model.onAuthenticationResult onComplete, Model.onAuthenticationResult onError) {
 
         auth.createUserWithEmailAndPassword(email, password)
                 .addOnFailureListener(e -> {
@@ -57,17 +55,17 @@ public class ModelFirebase {
                 });
     }
 
-    public static void signInUser(String email, String password, onAuthenticationResult onComplete, onAuthenticationResult onError) {
+    public static void signInUser(String email, String password, Model.onAuthenticationResult onComplete, Model.onAuthenticationResult onError) {
 
         auth.signInWithEmailAndPassword(email, password)
                 .addOnFailureListener(e -> onError.execute(email))
                 .addOnSuccessListener(authResult -> onComplete.execute(email));
     }
 
-    public static User getUserByUsername(String username) {
+    public static User getUserByEmail(String email) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        return User.fromJson(db.collection(userCollection).whereEqualTo(User.USERNAME, username)
+        return User.fromJson(db.collection(userCollection).whereEqualTo(User.EMAIL, email)
                 .get().getResult().getDocuments().get(0).getData());
     }
 
