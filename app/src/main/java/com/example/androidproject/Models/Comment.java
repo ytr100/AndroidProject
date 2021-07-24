@@ -18,10 +18,15 @@ import java.util.Map;
 @Entity(foreignKeys = {@ForeignKey(entity = Post.class,
         parentColumns = "postID",
         childColumns = "postID",
-        onDelete = ForeignKey.CASCADE)})
+        onDelete = ForeignKey.CASCADE),
+        @ForeignKey(entity = User.class,
+                parentColumns = "username",
+                childColumns = "username",
+                onDelete = ForeignKey.CASCADE)})
 public class Comment {
 
     final public static String ID = "commentID";
+    final public static String COMMENT_USERNAME = "commentUsername";
     final public static String TITLE = "commentTitle";
     final public static String CONTENT = "commentContent";
     final public static String LIKES = "commentLikes";
@@ -43,14 +48,15 @@ public class Comment {
     private Long lastUpdated;
     private boolean isDeleted;
 
-    //foreign key
+    //foreign keys
     @NonNull
     private String postID;
+    private String commentUsername;
 
     private String parentCommentID;
 
 
-    private static void incrementID(){
+    private static void incrementID() {
         SharedPreferences.Editor editor = MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
         IDCounter++;
         editor.putLong(ID, IDCounter);
@@ -72,10 +78,11 @@ public class Comment {
         return MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).getLong(LOCAL_LAST_UPDATED, 0);
     }
 
-    public static Comment createComment(String title, String content, String postID, String parentCommentID){
+    public static Comment createComment(String username, String title, String content, String postID, String parentCommentID) {
         Comment comment = new Comment();
         comment.setPostID(getIDCounter().toString());
         incrementID();
+        comment.setUsername(username);
         comment.setCommentTitle(title);
         comment.setCommentContent(content);
         comment.setCommentLikes(0);
@@ -88,6 +95,7 @@ public class Comment {
     public static Comment fromJson(Map<String, Object> json) {
         Comment comment = new Comment();
         comment.setCommentID((String) json.get(ID));
+        comment.setUsername((String)json.get(COMMENT_USERNAME));
         comment.setCommentTitle((String) json.get(TITLE));
         comment.setCommentContent((String) json.get(CONTENT));
         comment.setCommentLikes(Integer.parseInt((String) json.get(LIKES)));
@@ -105,6 +113,7 @@ public class Comment {
     public Map<String, Object> toJson() {
         Map<String, Object> json = new HashMap<>();
         json.put(ID, this.commentID);
+        json.put(COMMENT_USERNAME, this.commentUsername);
         json.put(TITLE, this.commentTitle);
         json.put(CONTENT, this.commentContent);
         json.put(LIKES, this.commentLikes);
@@ -180,5 +189,14 @@ public class Comment {
     public void setDeleted(boolean deleted) {
         isDeleted = deleted;
     }
+
+    public String getUsername() {
+        return commentUsername;
+    }
+
+    public void setUsername(String username) {
+        this.commentUsername = username;
+    }
+
 
 }

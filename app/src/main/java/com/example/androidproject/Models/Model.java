@@ -179,6 +179,29 @@ public class Model {
         return allComments;
     }
 
+    public LiveData<List<Comment>> getAllCommentsFromUser(User user) {
+        commentsLoadingState.setValue(LoadingState.loading);
+        Long localLastUpdated = Comment.getLocal_lastUpdated();
+
+        ModelFirebase.getCommentsFromUser(user, localLastUpdated, comments ->
+        {
+            executorService.execute(() -> {
+                Long lastUpdate = 0L;
+                for (Comment comment : comments) {
+                    if (comment.isDeleted())
+                        AppLocalDB.db.commentDao().delete(comment);
+                    else
+                        AppLocalDB.db.commentDao().insertAll(comment);
+                    if (lastUpdate < comment.getLastUpdated())
+                        lastUpdate = comment.getLastUpdated();
+                }
+                Comment.setLocal_lastUpdated(lastUpdate);
+                commentsLoadingState.postValue(LoadingState.loaded);
+            });
+        });
+        return allComments;
+    }
+
     public LiveData<List<Comment>> getAllCommentsFromPost(Post post) {
         commentsLoadingState.setValue(LoadingState.loading);
         Long localLastUpdated = Comment.getLocal_lastUpdated();

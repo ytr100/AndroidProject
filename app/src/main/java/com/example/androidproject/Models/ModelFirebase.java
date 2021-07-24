@@ -183,6 +183,24 @@ public class ModelFirebase {
                 });
     }
 
+    public static void getCommentsFromUser(User user, Long since, GetAllListener<Comment> listener){
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection(commentCollection)
+                .whereGreaterThanOrEqualTo(Comment.LAST_UPDATED, new Timestamp(since, 0))
+                .get()
+                .addOnCompleteListener(task -> {
+                    List<Comment> list = new LinkedList<Comment>();
+                    if (task.isSuccessful()) {
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            if (document.getData().get(Comment.COMMENT_USERNAME).equals(user.getUsername()))
+                                list.add(Comment.fromJson(document.getData()));
+                        }
+                    } else
+                        Log.d("ERROR", "Task is unsuccessful");
+                    listener.onComplete(list);
+                });
+    }
+
     public static void getCommentsFromPost(Post post, Long since, GetAllListener<Comment> listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection(commentCollection)
