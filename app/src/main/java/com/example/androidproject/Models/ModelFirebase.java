@@ -38,7 +38,7 @@ public class ModelFirebase {
 
 
     public static void signOutUser() {
-        FirebaseAuth.getInstance().signOut();
+        auth.signOut();
     }
 
     public static void signUpUser(String email, String password, Model.onAuthenticationResult onComplete, Model.onAuthenticationResult onError) {
@@ -49,7 +49,6 @@ public class ModelFirebase {
                     Log.d("TAG", e.getMessage());
                 })
                 .addOnSuccessListener(authResult -> {
-                    FirebaseUser user = auth.getCurrentUser();
                     onComplete.execute(email);
                 });
     }
@@ -66,7 +65,6 @@ public class ModelFirebase {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         db.collection(userCollection)
-                .whereEqualTo(User.IS_DELETED, false)
                 .whereEqualTo(User.EMAIL, email)
                 .get()
                 .addOnCompleteListener(task -> {
@@ -81,7 +79,6 @@ public class ModelFirebase {
     public static void getAllUsers(Long since, GetAllListener<User> listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection(userCollection)
-                .whereEqualTo(User.IS_DELETED, false)
                 .whereGreaterThanOrEqualTo(User.LAST_UPDATED, new Timestamp(since, 0))
                 .get()
                 .addOnCompleteListener(task -> {
@@ -117,12 +114,12 @@ public class ModelFirebase {
     public static void getAllPosts(Long since, GetAllListener<Post> listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection(postCollection)
-                .whereEqualTo(Post.IS_DELETED, false)
                 .whereGreaterThanOrEqualTo(Post.LAST_UPDATED, new Timestamp(since, 0))
                 .get()
                 .addOnCompleteListener(task -> {
                     List<Post> list = new LinkedList<Post>();
                     if (task.isSuccessful()) {
+                        Log.d("TAG2", "in if");
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             list.add(Post.fromJson(document.getData()));
                             Log.d("TAG2", "post: " + list.get(list.size() - 1).getPostTitle());
@@ -136,15 +133,14 @@ public class ModelFirebase {
     public static void getAllPostFromUser(User user, Long since, GetAllListener<Post> listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection(postCollection)
-                .whereEqualTo(Post.IS_DELETED, false)
-                .whereEqualTo(Post.USERNAME, user.getUsername())
                 .whereGreaterThanOrEqualTo(Post.LAST_UPDATED, new Timestamp(since, 0))
                 .get()
                 .addOnCompleteListener(task -> {
                     List<Post> list = new LinkedList<Post>();
                     if (task.isSuccessful()) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
-                            list.add(Post.fromJson(document.getData()));
+                            if (document.getData().get(Post.USERNAME).equals(user.getUsername()))
+                                list.add(Post.fromJson(document.getData()));
                         }
                     } else
                         Log.d("ERROR", "Task is unsuccessful");
@@ -173,7 +169,6 @@ public class ModelFirebase {
     public static void getAllComments(Long since, GetAllListener<Comment> listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection(commentCollection)
-                .whereEqualTo(Comment.IS_DELETED, false)
                 .whereGreaterThanOrEqualTo(Comment.LAST_UPDATED, new Timestamp(since, 0))
                 .get()
                 .addOnCompleteListener(task -> {
@@ -191,15 +186,14 @@ public class ModelFirebase {
     public static void getCommentsFromPost(Post post, Long since, GetAllListener<Comment> listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection(commentCollection)
-                .whereEqualTo(Comment.IS_DELETED, false)
-                .whereEqualTo(Comment.POST_ID, post.getPostID())
                 .whereGreaterThanOrEqualTo(Comment.LAST_UPDATED, new Timestamp(since, 0))
                 .get()
                 .addOnCompleteListener(task -> {
                     List<Comment> list = new LinkedList<Comment>();
                     if (task.isSuccessful()) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
-                            list.add(Comment.fromJson(document.getData()));
+                            if (document.getData().get(Comment.POST_ID).equals(post.getPostID()))
+                                list.add(Comment.fromJson(document.getData()));
                         }
                     } else
                         Log.d("ERROR", "Task is unsuccessful");
@@ -210,15 +204,14 @@ public class ModelFirebase {
     public static void getCommentsFromParentComment(Comment parentComment, Long since, GetAllListener<Comment> listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection(commentCollection)
-                .whereEqualTo(Comment.IS_DELETED, false)
-                .whereEqualTo(Comment.PARENT_COMMENT_ID, parentComment.getCommentID())
                 .whereGreaterThanOrEqualTo(Comment.LAST_UPDATED, new Timestamp(since, 0))
                 .get()
                 .addOnCompleteListener(task -> {
                     List<Comment> list = new LinkedList<Comment>();
                     if (task.isSuccessful()) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
-                            list.add(Comment.fromJson(document.getData()));
+                            if (document.getData().get(Comment.POST_ID).equals(parentComment.getPostID()))
+                                list.add(Comment.fromJson(document.getData()));
                         }
                     } else
                         Log.d("ERROR", "Task is unsuccessful");

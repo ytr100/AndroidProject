@@ -33,6 +33,7 @@ public class Model {
     public interface GetUserWithEmailListener {
         public void onComplete(User user);
     }
+
     public void getUserByEmail(String email, GetUserWithEmailListener listener) {
         ModelFirebase.getUserByEmail(email, listener);
     }
@@ -58,7 +59,10 @@ public class Model {
             executorService.execute(() -> {
                 Long lastUpdate = 0L;
                 for (User user : users) {
-                    AppLocalDB.db.userDao().insertAll(user);
+                    if (user.isDeleted())
+                        AppLocalDB.db.userDao().delete(user);
+                    else
+                        AppLocalDB.db.userDao().insertAll(user);
                     if (lastUpdate < user.getLastUpdated())
                         lastUpdate = user.getLastUpdated();
                 }
@@ -93,9 +97,13 @@ public class Model {
         ModelFirebase.getAllPosts(localLastUpdated, posts ->
         {
             executorService.execute(() -> {
+                getAllUsers();
                 Long lastUpdate = 0L;
                 for (Post post : posts) {
-                    AppLocalDB.db.postDao().insertAll(post);
+                    if (post.isDeleted())
+                        AppLocalDB.db.postDao().delete(post);
+                    else
+                        AppLocalDB.db.postDao().insertAll(post);
                     if (lastUpdate < post.getLastUpdated())
                         lastUpdate = post.getLastUpdated();
                 }
@@ -113,9 +121,13 @@ public class Model {
 
         ModelFirebase.getAllPostFromUser(user, localLastUpdated, posts ->
                 executorService.execute(() -> {
+                    getAllUsers();
                     Long lastUpdate = 0L;
                     for (Post post : posts) {
-                        AppLocalDB.db.postDao().insertAll(post);
+                        if (post.isDeleted())
+                            AppLocalDB.db.postDao().delete(post);
+                        else
+                            AppLocalDB.db.postDao().insertAll(post);
                         if (lastUpdate < post.getLastUpdated())
                             lastUpdate = post.getLastUpdated();
                     }
@@ -150,9 +162,13 @@ public class Model {
         ModelFirebase.getAllComments(localLastUpdated, comments ->
         {
             executorService.execute(() -> {
+                getAllComments();
                 Long lastUpdate = 0L;
                 for (Comment comment : comments) {
-                    AppLocalDB.db.commentDao().insertAll(comment);
+                    if (comment.isDeleted())
+                        AppLocalDB.db.commentDao().delete(comment);
+                    else
+                        AppLocalDB.db.commentDao().insertAll(comment);
                     if (lastUpdate < comment.getLastUpdated())
                         lastUpdate = comment.getLastUpdated();
                 }
@@ -172,7 +188,10 @@ public class Model {
             executorService.execute(() -> {
                 Long lastUpdate = 0L;
                 for (Comment comment : comments) {
-                    AppLocalDB.db.commentDao().insertAll(comment);
+                    if (comment.isDeleted())
+                        AppLocalDB.db.commentDao().delete(comment);
+                    else
+                        AppLocalDB.db.commentDao().insertAll(comment);
                     if (lastUpdate < comment.getLastUpdated())
                         lastUpdate = comment.getLastUpdated();
                 }
@@ -192,7 +211,10 @@ public class Model {
             executorService.execute(() -> {
                 Long lastUpdate = 0L;
                 for (Comment comment : comments) {
-                    AppLocalDB.db.commentDao().insertAll(comment);
+                    if (comment.isDeleted())
+                        AppLocalDB.db.commentDao().delete(comment);
+                    else
+                        AppLocalDB.db.commentDao().insertAll(comment);
                     if (lastUpdate < comment.getLastUpdated())
                         lastUpdate = comment.getLastUpdated();
                 }
