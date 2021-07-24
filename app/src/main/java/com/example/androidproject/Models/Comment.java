@@ -50,6 +50,18 @@ public class Comment {
     private String parentCommentID;
 
 
+    private static void incrementID(){
+        SharedPreferences.Editor editor = MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
+        IDCounter++;
+        editor.putLong(ID, IDCounter);
+        editor.apply();
+    }
+
+    public static Long getIDCounter() {
+        return MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).getLong(ID, 0);
+    }
+
+
     public static void setLocal_lastUpdated(Long ts) {
         SharedPreferences.Editor editor = MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
         editor.putLong(LOCAL_LAST_UPDATED, ts);
@@ -61,19 +73,16 @@ public class Comment {
     }
 
     public static Comment createComment(String title, String content, String postID, String parentCommentID){
-        Map<String, Object> json = new HashMap<>();
-
-        json.put(ID, IDCounter.toString());
-        IDCounter++;
-        json.put(TITLE, title);
-        json.put(CONTENT, content);
-        json.put(LIKES, 0);
-        json.put(POST_ID, postID);
-        json.put(PARENT_COMMENT_ID, parentCommentID);
-        json.put(LAST_UPDATED, FieldValue.serverTimestamp());
-        json.put(IS_DELETED, false);
-
-        return fromJson(json);
+        Comment comment = new Comment();
+        comment.setPostID(getIDCounter().toString());
+        incrementID();
+        comment.setCommentTitle(title);
+        comment.setCommentContent(content);
+        comment.setCommentLikes(0);
+        comment.setPostID(postID);
+        comment.setParentCommentID(parentCommentID);
+        comment.setDeleted(false);
+        return comment;
     }
 
     public static Comment fromJson(Map<String, Object> json) {

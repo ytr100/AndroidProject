@@ -30,8 +30,11 @@ public class Model {
         public void execute(String email);
     }
 
-    public User getUserByEmail(String email) {
-        return ModelFirebase.getUserByEmail(email);
+    public interface GetUserWithEmailListener {
+        public void onComplete(User user);
+    }
+    public void getUserByEmail(String email, GetUserWithEmailListener listener) {
+        ModelFirebase.getUserByEmail(email, listener);
     }
 
     public static void signOutUser() {

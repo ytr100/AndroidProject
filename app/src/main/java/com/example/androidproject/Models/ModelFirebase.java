@@ -61,12 +61,22 @@ public class ModelFirebase {
                 .addOnSuccessListener(authResult -> onComplete.execute(email));
     }
 
-    public static User getUserByEmail(String email) {
+
+    public static void getUserByEmail(String email, Model.GetUserWithEmailListener listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        return User.fromJson(db.collection(userCollection).whereEqualTo(User.EMAIL, email)
-                .get().getResult().getDocuments().get(0).getData());
+        db.collection(userCollection)
+                .whereEqualTo(User.IS_DELETED, false)
+                .whereEqualTo(User.EMAIL, email)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful())
+                        listener.onComplete(User.fromJson(task.getResult().getDocuments().get(0).getData()));
+                    else
+                        Log.d("ERROR", "Task is unsuccessful : get email");
+                });
     }
+
 
     public static void getAllUsers(Long since, GetAllListener<User> listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -115,6 +125,7 @@ public class ModelFirebase {
                     if (task.isSuccessful()) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             list.add(Post.fromJson(document.getData()));
+                            Log.d("TAG2", "post: " + list.get(list.size() - 1).getPostTitle());
                         }
                     } else
                         Log.d("ERROR", "Task is unsuccessful");
@@ -177,7 +188,7 @@ public class ModelFirebase {
                 });
     }
 
-    public static void getCommentsFromPost(Post post,Long since, GetAllListener<Comment> listener) {
+    public static void getCommentsFromPost(Post post, Long since, GetAllListener<Comment> listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection(commentCollection)
                 .whereEqualTo(Comment.IS_DELETED, false)
@@ -196,7 +207,7 @@ public class ModelFirebase {
                 });
     }
 
-    public static void getCommentsFromParentComment(Comment parentComment,Long since, GetAllListener<Comment> listener) {
+    public static void getCommentsFromParentComment(Comment parentComment, Long since, GetAllListener<Comment> listener) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         db.collection(commentCollection)
                 .whereEqualTo(Comment.IS_DELETED, false)

@@ -46,6 +46,18 @@ public class Post {
     @NonNull
     private String postUsername;
 
+    private static void incrementID(){
+        SharedPreferences.Editor editor = MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
+        IDCounter++;
+        editor.putLong(ID, IDCounter);
+        editor.apply();
+    }
+
+    public static Long getIDCounter() {
+        return MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).getLong(ID, 0);
+    }
+
+
     public static void setLocal_lastUpdated(Long ts) {
         SharedPreferences.Editor editor = MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
         editor.putLong(LOCAL_LAST_UPDATED, ts);
@@ -56,19 +68,16 @@ public class Post {
         return MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).getLong(LOCAL_LAST_UPDATED, 0);
     }
 
-    public static Post createPost(String title, String content, String postUsername){
-        Map<String, Object> json = new HashMap<>();
-
-        json.put(ID, IDCounter.toString());
-        IDCounter++;
-        json.put(TITLE, title);
-        json.put(CONTENT, content);
-        json.put(LIKES, 0);
-        json.put(USERNAME, postUsername);
-        json.put(LAST_UPDATED, FieldValue.serverTimestamp());
-        json.put(IS_DELETED, false);
-
-        return fromJson(json);
+    public static Post createPost(String title, String content, String postUsername) {
+        Post post = new Post();
+        post.setPostID(getIDCounter().toString());
+        incrementID();
+        post.setPostTitle(title);
+        post.setPostContent(content);
+        post.setPostLikes(0);
+        post.setPostUsername(postUsername);
+        post.setDeleted(false);
+        return post;
     }
 
     public static Post fromJson(Map<String, Object> json) {
