@@ -29,6 +29,8 @@ public class login extends Fragment {
         EditText email = root.findViewById(R.id.login_email);
         EditText password = root.findViewById(R.id.login_password);
         Button btn = root.findViewById(R.id.login_btn);
+        btn.setOnClickListener(Navigation.createNavigateOnClickListener(R.id.action_login_to_appActivity));
+
 //        Model.instance.getUserByEmail("tamir@gmail.com", (user) -> {
 //            LiveData<List<User>> allList = Model.instance.getAllUsers();
 ////                                LiveData<List<Post>> list = Model.instance.getPostsFromUser(user);

@@ -6,50 +6,42 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.androidproject.Model.Entity.Comment;
 import com.example.androidproject.Model.Entity.Post;
 import com.example.androidproject.Model.Listeners.OnItemClickListener;
 import com.example.androidproject.R;
 import com.google.android.material.snackbar.Snackbar;
 
-//TODO: livedata
-public class PostsFragment extends Fragment {
-    PostsViewModel postsViewModel;
+public class CommentsFragment extends Fragment {
+
+    private CommentsViewModel commentsViewModel;
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-
-        postsViewModel = new ViewModelProvider(this).get(PostsViewModel.class);
-        View root = inflater.inflate(R.layout.fragment_posts, container, false);
-
-        RecyclerView postsList = root.findViewById(R.id.main_posts_list);
-        postsList.setLayoutManager(new LinearLayoutManager(root.getContext()));
-        PostsListAdapter adapter = new PostsListAdapter();
-        adapter.setOnListItemClickListener(position ->{
-                    PostsFragmentDirections.ActionPostsFragmentToCommentsFragment action = PostsFragmentDirections.actionPostsFragmentToCommentsFragment("" + position);
-                    Snackbar.make(root, "post " + position + " was clicked!", 2000).show();
-                    Navigation.findNavController(root).navigate(action);
-                }
-                );
-        postsList.setAdapter(adapter);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        commentsViewModel = new ViewModelProvider(this).get(CommentsViewModel.class);
+        View root = inflater.inflate(R.layout.fragment_comments, container, false);
+        RecyclerView commentsList = root.findViewById(R.id.main_comments_list);
+        commentsList.setLayoutManager(new LinearLayoutManager(root.getContext()));
+        CommentsListAdapter adapter = new CommentsListAdapter();
+        adapter.setOnListItemClickListener(position ->
+                Snackbar.make(root, "comment " + position + " was clicked!", 2000).show());
+        commentsList.setAdapter(adapter);
+        String postID = CommentsFragmentArgs.fromBundle(getArguments()).getPostID();
+        //hashcode of ""+x is different from the hashcode of x
+        commentsViewModel.getData(new Post(postID,postID,postID));//TODO: transfer to viewmodel
         setHasOptionsMenu(true);
         return root;
     }
-
-
-
-
-    class PostsListAdapter extends RecyclerView.Adapter<RowViewHolder> {
+    class CommentsListAdapter extends RecyclerView.Adapter<RowViewHolder> {
         private OnItemClickListener listener;
 
         @NonNull
@@ -65,28 +57,27 @@ public class PostsFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull RowViewHolder holder, int position) {
-            Post p = postsViewModel.getData().get(position);
+
+            Comment c = commentsViewModel.getCurrent().get(position);
             Log.d("TAG", "onBindViewHolder " + position);
-            holder.bind(p);
+            holder.bind(c);
         }
 
         @Override
         public int getItemCount() {
-            return postsViewModel.getData().size();
+            int x = commentsViewModel.getCurrent().size();
+            Log.d("TAG","debug");
+            return x;
         }
     }
 
-
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()){
+        switch (item.getItemId()) {
             case R.id.menu_add:
-                //Snackbar.make(requireView(),"PostsFragment",2000).show();
-                item.setVisible(false);
+                Snackbar.make(requireView(), "CommentsFragment", 2000).show();
                 return true;
         }
         return super.onOptionsItemSelected(item);
     }
-
-
 }

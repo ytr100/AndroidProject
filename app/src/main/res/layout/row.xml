@@ -41,26 +41,34 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/row_username" />
 
-    <TextView
-        android:id="@+id/row_likes"
+    <ImageButton
+        android:id="@+id/row_delete"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="8dp"
-        android:text="0 Likes"
+        android:layout_marginStart="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/row_content" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/row_edit"
+        app:srcCompat="@android:drawable/ic_menu_delete" />
 
-    <TextView
-        android:id="@+id/row_comments"
+    <ImageButton
+        android:id="@+id/row_edit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:text="0 Comments"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintStart_toEndOf="@+id/row_delete"
+        app:layout_constraintTop_toBottomOf="@+id/row_photo"
+        app:srcCompat="@android:drawable/ic_menu_edit" />
+
+    <ImageView
+        android:id="@+id/row_photo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/row_content" />
+        app:layout_constraintTop_toBottomOf="@+id/row_content"
+        app:srcCompat="@drawable/ic_launcher_background" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

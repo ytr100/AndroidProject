@@ -25,11 +25,16 @@ public class AppActivity extends AppCompatActivity {
     }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home){
-            navController.navigateUp();
-        }
-        else if (item.getItemId() == R.id.menu_add){
-            Snackbar.make(findViewById(android.R.id.content), "email is good", 5 * 1000).show();
+        switch(item.getItemId()){
+            case android.R.id.home:
+                navController.navigateUp();
+                break;
+            case R.id.menu_profile:
+                Snackbar.make(findViewById(android.R.id.content),"MainAppActivity",2000).show();
+                navController.navigate(R.id.action_global_profileFragment);
+                return true;
+            case R.id.menu_add:
+                break; //delegate to fragments
         }
         return super.onOptionsItemSelected(item);
     }

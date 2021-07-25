@@ -9,5 +9,24 @@
         android:id="@+id/postsFragment"
         android:name="com.example.androidproject.UI.MainApp.PostsFragment"
         android:label="Posts"
-        tools:layout="@layout/fragment_posts" />
+        tools:layout="@layout/fragment_posts" >
+        <action
+            android:id="@+id/action_postsFragment_to_commentsFragment"
+            app:destination="@id/commentsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/commentsFragment"
+        android:name="com.example.androidproject.UI.MainApp.CommentsFragment"
+        android:label="Comments"
+        tools:layout="@layout/fragment_comments" >
+        <argument
+            android:name="postID"
+            app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.androidproject.UI.MainApp.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/profile_fragment" />
+    <action android:id="@+id/action_global_profileFragment" app:destination="@id/profileFragment" />
 </navigation>
