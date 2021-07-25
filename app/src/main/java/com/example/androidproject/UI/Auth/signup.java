@@ -28,14 +28,14 @@ public class signup extends Fragment {
         EditText password = root.findViewById(R.id.signup_password);
         Button btn = root.findViewById(R.id.signup_btn);
 
-        btn.setOnClickListener(v ->
-                signUpViewModel.signUp(
-                        username.getText().toString(),
-                        email.getText().toString(),
-                        password.getText().toString(),
-                        m -> Snackbar.make(root, "email is good", 5 * 1000).show(),
-                        m -> Snackbar.make(root, "invalid parameters (email or password)", 5 * 1000).show()
-                )
+        btn.setOnClickListener(v -> {}
+//                signUpViewModel.signUp(
+//                        username.getText().toString(),
+//                        email.getText().toString(),
+//                        password.getText().toString(),
+//                        m -> Snackbar.make(root, "email is good", 5 * 1000).show(),
+//                        m -> Snackbar.make(root, "invalid parameters (email or password)", 5 * 1000).show()
+//                )
         );
 
         return root;
