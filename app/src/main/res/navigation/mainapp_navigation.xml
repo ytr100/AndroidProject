@@ -13,6 +13,11 @@
         <action
             android:id="@+id/action_postsFragment_to_commentsFragment"
             app:destination="@id/commentsFragment" />
+        <argument
+            android:name="username"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
     </fragment>
     <fragment
         android:id="@+id/commentsFragment"
@@ -21,12 +26,57 @@
         tools:layout="@layout/fragment_comments" >
         <argument
             android:name="postID"
-            app:argType="string" />
+            app:argType="string"
+            app:nullable="true" />
+        <action
+            android:id="@+id/action_commentsFragment_self"
+            app:destination="@id/commentsFragment" />
+        <argument
+            android:name="parentCommentID"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
+            android:name="username"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
     </fragment>
     <fragment
         android:id="@+id/profileFragment"
         android:name="com.example.androidproject.UI.MainApp.ProfileFragment"
         android:label="Profile"
-        tools:layout="@layout/profile_fragment" />
+        tools:layout="@layout/profile_fragment" >
+        <argument
+            android:name="username"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_profileFragment_to_commentsFragment"
+            app:destination="@id/commentsFragment" />
+        <action
+            android:id="@+id/action_profileFragment_to_postsFragment"
+            app:destination="@id/postsFragment" />
+    </fragment>
     <action android:id="@+id/action_global_profileFragment" app:destination="@id/profileFragment" />
+    <fragment
+        android:id="@+id/editFragment"
+        android:name="com.example.androidproject.UI.MainApp.EditFragment"
+        android:label="Edit"
+        tools:layout="@layout/edit_fragment">
+        <argument
+            android:name="postID"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
+            android:name="commentID"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
+            android:name="parentCommentID"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
+            android:name="isCreate"
+            app:argType="boolean" />
+    </fragment>
+    <action android:id="@+id/action_global_editFragment" app:destination="@id/editFragment" />
 </navigation>

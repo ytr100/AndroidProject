@@ -1,5 +1,6 @@
 package com.example.androidproject.UI.MainApp;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -10,6 +11,8 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
+import com.example.androidproject.MainappNavigationDirections;
+import com.example.androidproject.Model.Database.MyModel;
 import com.example.androidproject.R;
 import com.google.android.material.snackbar.Snackbar;
 
@@ -30,8 +33,9 @@ public class AppActivity extends AppCompatActivity {
                 navController.navigateUp();
                 break;
             case R.id.menu_profile:
-                Snackbar.make(findViewById(android.R.id.content),"MainAppActivity",2000).show();
-                navController.navigate(R.id.action_global_profileFragment);
+                //TODO: get current user from db
+                MainappNavigationDirections.ActionGlobalProfileFragment action = MainappNavigationDirections.actionGlobalProfileFragment(MyModel.CURRENT_USER);
+                navController.navigate(action);
                 return true;
             case R.id.menu_add:
                 break; //delegate to fragments

@@ -1,26 +1,38 @@
 package com.example.androidproject.UI.MainApp;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.navigation.NavDirections;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.androidproject.MainappNavigationDirections;
+import com.example.androidproject.Model.Database.MyModel;
+import com.example.androidproject.Model.Entity.Comment;
 import com.example.androidproject.Model.Entity.Holdable;
+import com.example.androidproject.Model.Entity.Post;
+import com.example.androidproject.Model.Listeners.OnDeleteClickListener;
+import com.example.androidproject.Model.Listeners.OnEditClickListener;
 import com.example.androidproject.Model.Listeners.OnItemClickListener;
 import com.example.androidproject.R;
 
- class RowViewHolder extends RecyclerView.ViewHolder {
+class RowViewHolder extends RecyclerView.ViewHolder {
     TextView username;
     TextView title;
     TextView content;
     ImageView photo;
     ImageButton edit;
     ImageButton delete;
+    OnDeleteClickListener deleteClickListener;
+    OnEditClickListener editClickListener;
 
-    public RowViewHolder(@NonNull View itemView, OnItemClickListener listener) {
+    public RowViewHolder(@NonNull View itemView, OnItemClickListener itemListener, OnEditClickListener editListener, OnDeleteClickListener deleteListener) {
         super(itemView);
         username = itemView.findViewById(R.id.row_username);
         title = itemView.findViewById(R.id.row_title);
@@ -29,14 +41,14 @@ import com.example.androidproject.R;
         delete = itemView.findViewById(R.id.row_delete);
         photo = itemView.findViewById(R.id.row_photo);
         itemView.setOnClickListener(v -> {
-            if (listener != null) {
+            if (itemListener != null) {
                 int position = getAdapterPosition();
                 if (position != RecyclerView.NO_POSITION)
-                    listener.onClick(position);
+                    itemListener.onClick(position);
             }
         });
-        edit.setOnClickListener(v->{});//TODO: navigate to edit/delete screen
-        delete.setOnClickListener(v->{});
+        deleteClickListener = deleteListener;
+        editClickListener = editListener;
     }
 
     public void bind(Holdable b) {
@@ -44,7 +56,13 @@ import com.example.androidproject.R;
         title.setText(b.getTitle());
         content.setText(b.getContent());
         photo.setVisibility(View.VISIBLE);//TODO: add photo support
-        edit.setVisibility(View.VISIBLE);//TODO: check if current user
-        delete.setVisibility(View.VISIBLE);
+        edit.setVisibility(MyModel.CURRENT_USER.equals(b.getUsername())  ? View.VISIBLE : View.GONE);
+        delete.setVisibility(MyModel.CURRENT_USER.equals(b.getUsername())  ? View.VISIBLE : View.GONE);
+        edit.setOnClickListener(v -> editClickListener.onClick(b));
+        delete.setOnClickListener(v -> deleteClickListener.onClick(b));
+        username.setOnClickListener(v -> {
+            MainappNavigationDirections.ActionGlobalProfileFragment action = MainappNavigationDirections.actionGlobalProfileFragment(username.getText().toString());
+            Navigation.findNavController(v).navigate(action);
+        });
     }
 }
