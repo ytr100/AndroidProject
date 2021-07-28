@@ -1,259 +1,188 @@
 package com.example.androidproject.Model.Database;
 
+import android.graphics.Bitmap;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.androidproject.Model.Database.Local.LocalDataBase;
+import com.example.androidproject.Model.Database.Remote.MyModelFirebase;
 import com.example.androidproject.Model.Entity.Comment;
+import com.example.androidproject.Model.Entity.Message;
 import com.example.androidproject.Model.Entity.Post;
 import com.example.androidproject.Model.Entity.User;
+import com.example.androidproject.Model.Listeners.GetCommentListener;
+import com.example.androidproject.Model.Listeners.GetPostListener;
+import com.example.androidproject.Model.Listeners.GetUserListener;
+import com.example.androidproject.Model.Listeners.OnCommentsCompleteListener;
+import com.example.androidproject.Model.Listeners.OnDBActionComplete;
+import com.example.androidproject.Model.Listeners.OnPostsCompleteListener;
+import com.example.androidproject.Model.Listeners.UploadImageListener;
+import com.example.androidproject.MyApplication;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MyModel {
 
 
     public static final MyModel instance = new MyModel();
-    private static final String NEXT_COMMENT_ID = "8";
-    public static String CURRENT_USER = "C";
-    private static String NEXT_POST_ID = "4";
-    private final Map<String, MutableLiveData<List<Comment>>> commentsOfPost;
-    private final Map<String, MutableLiveData<List<Post>>> postsOfUsers;
-    private final Map<String, MutableLiveData<List<Comment>>> commentsOfUsers;
-    private final Map<String, MutableLiveData<List<Comment>>> commentsOfComments;
-    private Map<Comment, List<Comment>> nestedComments;
-    private Map<Post, List<Comment>> directComments;
-    private Map<String, Comment> translationComments;
-    private Map<String, Post> translationPosts;
-    private Map<String, User> users;
-    private MutableLiveData<List<Post>> allPosts;
+    public static final String NEXT_COMMENT_ID = "8";//TODO: auto generate ids
+    public static String CURRENT_USER = "C";//TODO: authentication
+    public static String NEXT_POST_ID = "4";//TODO: auto generate ids
+    public final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final LocalDataBase local;
+    public LiveData<List<User>> allUsers;
+    public LiveData<List<Post>> allPosts;
+    public LiveData<List<Comment>> allComments;
+    public MutableLiveData<UserLoadingState> usersLoadingState;
+    public MutableLiveData<PostLoadingState> postsLoadingState;
+    public MutableLiveData<CommentLoadingState> commentsLoadingState;
 
     private MyModel() {
-        initUsers();
-        initPosts();
-        initComments();
-        initDirect();
-        initNested();
-        postsOfUsers = new HashMap<>();
-        commentsOfPost = new HashMap<>();
-        commentsOfUsers = new HashMap<>();
-        commentsOfComments = new HashMap<>();
+        usersLoadingState = new MutableLiveData<>(UserLoadingState.loading);
+        postsLoadingState = new MutableLiveData<>(PostLoadingState.loading);
+        commentsLoadingState = new MutableLiveData<>(CommentLoadingState.loading);
+        local = new LocalDataBase();
+        allPosts = local.getAllPosts();
+        allComments = local.getAllComments();
+        allUsers = local.getAllUsers();
+        allPosts.observeForever(posts -> postsLoadingState.setValue(PostLoadingState.loaded));
+        allComments.observeForever(comments -> commentsLoadingState.setValue(CommentLoadingState.loaded));
+        allUsers.observeForever(users -> usersLoadingState.setValue(UserLoadingState.loaded));
     }
 
-    public void insertPost(Post p, String username) {
-        p.setPostUsername(username);
-        p.setPostID(NEXT_POST_ID);
-        incrementPostID();
-        translationPosts.put(p.getPostID(), p);
-        List<Post> newlist = allPosts.getValue();
-        newlist.add(p);
-        allPosts.setValue(newlist);
-        directComments.put(p, new ArrayList<>());
-        getPostsOfUser(username);
-        newlist = postsOfUsers.get(username).getValue();
-        newlist.add(p);
-        postsOfUsers.get(username).setValue(newlist);
+    public void insertPost(Message m, String username, GetPostListener actionComplete) {
+        postsLoadingState.setValue(PostLoadingState.loading);
+        executor.execute(() ->
+                local.insertPost(m, username, post ->  MyApplication.mainHandler.post(()-> actionComplete.onComplete(post))));
     }
 
-    public void editPost(Post p) {
-        translationPosts.put(p.getPostID(), p);
-        List<Post> newlist = allPosts.getValue();
-        newlist.remove(p);
-        newlist.add(p);
-        allPosts.setValue(newlist);
-        getPostsOfUser(p.getPostUsername());
-        newlist = postsOfUsers.get(p.getPostUsername()).getValue();
-        newlist.remove(p);
-        newlist.add(p);
-        postsOfUsers.get(p.getPostUsername()).setValue(newlist);
-
-    }
-    public void deletePost(Post p) {
-        translationPosts.remove(p.getPostUsername());
-        List<Post> newlist = allPosts.getValue();
-        newlist.remove(p);
-        allPosts.setValue(newlist);
-        getPostsOfUser(p.getPostUsername());
-        newlist = postsOfUsers.get(p.getPostUsername()).getValue();
-        newlist.remove(p);
-        postsOfUsers.get(p.getPostUsername()).setValue(newlist);
+    public void editPost(Post p, OnDBActionComplete actionComplete) {
+        postsLoadingState.setValue(PostLoadingState.loading);
+        executor.execute(() -> {
+            local.editPost(p);
+            MyApplication.mainHandler.post(actionComplete::onComplete);
+        });
 
     }
 
-    public void insertComment(Comment c, String username) {
+    public void deletePost(Post p, OnDBActionComplete actionComplete) {
+        postsLoadingState.setValue(PostLoadingState.loading);
+        executor.execute(() -> {
+            local.deletePost(p);
+            MyApplication.mainHandler.post(actionComplete::onComplete);
+        });
+    }
+
+    public void deleteComment(Comment c, OnDBActionComplete actionComplete) {
+        commentsLoadingState.setValue(CommentLoadingState.loading);
+        executor.execute(() -> {
+            local.deleteComment(c);
+            MyApplication.mainHandler.post(actionComplete::onComplete);
+        });
+    }
+
+    public void editComment(Comment c, OnDBActionComplete actionComplete) {
+        commentsLoadingState.setValue(CommentLoadingState.loading);
+        executor.execute(() -> {
+            local.editComment(c);
+            MyApplication.mainHandler.post(actionComplete::onComplete);
+        });
+    }
+
+    public void insertComment(Message m, String username, String postID, String parentCommentID, GetCommentListener actionComplete) {
+        commentsLoadingState.setValue(CommentLoadingState.loading);
+        executor.execute(() ->
+                local.insertComment(m, username, postID, parentCommentID, comment ->
+                MyApplication.mainHandler.post(()-> actionComplete.onComplete(comment))));
+    }
+
+    public void getPostByID(String postID, GetPostListener listener) {//
+        executor.execute(() -> {
+            Post p = local.getPostByID(postID);
+            MyApplication.mainHandler.post(() -> listener.onComplete(p));
+        });
 
     }
 
-    public Post getByID(String postID) {
-        return translationPosts.get(postID);
-    }
-
-    private void incrementPostID() {
+    public void incrementPostID() {
         int x = Integer.parseInt(NEXT_POST_ID) + 1;
         NEXT_POST_ID = Integer.toString(x);
     }
 
-    private void incrementCommentID() {
+    public void incrementCommentID() {
         int x = Integer.parseInt(NEXT_COMMENT_ID) + 1;
         NEXT_POST_ID = Integer.toString(x);
     }
 
-    private void initUsers() {
-        users = new HashMap<>();
-        users.put("A", new User("A", "A@mail.com"));
-        users.put("B", new User("B", "B@mail.com"));
-        users.put("C", new User("C", "C@mail.com"));
+    public void getCommentsOfPost(String postID, OnCommentsCompleteListener actionComplete) {
+        executor.execute(() -> {
+          List<Comment> result =  local.getCommentsOfPost(postID);
+            MyApplication.mainHandler.post(() -> actionComplete.onComplete(result));
+        });
     }
 
-    private void initPosts() {
-        translationPosts = new HashMap<>();
-        Post p1, p2, p3;
-        p1 = new Post("Hello From A", "I am A", "");
-        p1.setPostID("1");
-        p1.setPostUsername("A");
-        translationPosts.put("1", p1);
-        p2 = new Post("Hello From B", "I am B", "");
-        p2.setPostID("2");
-        p2.setPostUsername("B");
-        translationPosts.put("2", p2);
-        p3 = new Post("Hello From C", "I am C", "");
-        p3.setPostID("3");
-        p3.setPostUsername("C");
-        translationPosts.put("3", p3);
+    public void getCommentsOfComment(String parentCommentID, OnCommentsCompleteListener actionComplete) {
+
+        executor.execute(() -> {
+            List<Comment> result =  local.getCommentsOfComment(parentCommentID);
+            MyApplication.mainHandler.post(() -> actionComplete.onComplete(result));
+        });
     }
 
-    private void initComments() {
-        translationComments = new HashMap<>();
-        Comment c1, c2, c3, c4, c5, c6, c7,c8;
-        c1 = new Comment("Comment from B", "I am B (comment)", "");
-        c1.setParentCommentID(null);
-        c1.setPostID("1");
-        c1.setCommentUsername("B");
-        c1.setCommentID("1");
-        translationComments.put("1", c1);
-        c2 = new Comment("Comment from A", "I am A (comment)", "");
-        c2.setParentCommentID(null);
-        c2.setPostID("1");
-        c2.setCommentUsername("A");
-        c2.setCommentID("2");
-        translationComments.put("2", c2);
-        c3 = new Comment("Comment from A", "I am A (nested comment)", "");
-        c3.setParentCommentID("1");
-        c3.setPostID("1");
-        c3.setCommentUsername("A");
-        c3.setCommentID("3");
-        translationComments.put("3", c3);
-        c4 = new Comment("Comment from C", "I am C (nested comment)", "");
-        c4.setParentCommentID("1");
-        c4.setPostID("1");
-        c4.setCommentUsername("C");
-        c4.setCommentID("4");
-        translationComments.put("4", c4);
-        c5 = new Comment("Comment from A", "I am A (comment)", "");
-        c5.setParentCommentID(null);
-        c5.setPostID("3");
-        c5.setCommentUsername("A");
-        c5.setCommentID("5");
-        translationComments.put("5", c5);
-        c6 = new Comment("Comment from B", "I am B (nested comment)", "");
-        c6.setParentCommentID("5");
-        c6.setPostID("3");
-        c6.setCommentUsername("B");
-        c6.setCommentID("6");
-        translationComments.put("6", c6);
-        c7 = new Comment("Comment from C", "I am C (nested comment)", "");
-        c7.setParentCommentID("5");
-        c7.setPostID("3");
-        c7.setCommentUsername("C");
-        c7.setCommentID("7");
-        translationComments.put("7", c7);
-        c8  = new Comment("Comment from C", "I am C (comment)", "");
-        c8.setParentCommentID(null);
-        c8.setPostID("2");
-        c8.setCommentUsername("C");
-        c8.setCommentID("8");
-        translationComments.put("8", c8);
-    }
-
-    private void initDirect() {
-        directComments = new HashMap<>();
-        for (Post p : translationPosts.values()) {
-            List<Comment> direct = new ArrayList<>();
-            for (Comment c : translationComments.values())
-                if (c.getParentCommentID() == null)
-                    if (c.getPostID().equals(p.getPostID()))
-                        direct.add(c);
-            Collections.sort(direct, (o1, o2) -> o1.getCommentID().compareTo(o2.getCommentID()));
-            directComments.put(p, direct);
-        }
-    }
-
-    private void initNested() {
-        nestedComments = new HashMap<>();
-
-        for (List<Comment> direct : directComments.values()) {
-            for (Comment parent : direct) {
-                List<Comment> nestList = new ArrayList<>();
-                for (Comment nested : translationComments.values())
-                    if (nested.getParentCommentID() != null)
-                        if (nested.getParentCommentID().equals(parent.getCommentID()))
-                            nestList.add(nested);
-                Collections.sort(nestList, (o1, o2) -> o1.getCommentID().compareTo(o2.getCommentID()));
-                nestedComments.put(parent, nestList);
-            }
-        }
-    }
-
-    public LiveData<List<Comment>> getCommentsOfPost(String postID) {
-        if (!commentsOfPost.containsKey(postID))
-            commentsOfPost.put(postID, new MutableLiveData<>(directComments.get(translationPosts.get(postID))));
-        return commentsOfPost.get(postID);
-    }
-
-    public LiveData<List<Comment>> getCommentsOfComment(String parentCommentID) {
-        if (!commentsOfComments.containsKey(parentCommentID))
-            commentsOfComments.put(parentCommentID, new MutableLiveData<>(nestedComments.get(translationComments.get(parentCommentID))));
-        return commentsOfComments.get(parentCommentID);
-    }
-
-    public LiveData<List<Comment>> getCommentsOfUser(String username) {
-        if (!commentsOfUsers.containsKey(username)) {
-            List<Comment> commentsOfUser = new ArrayList<>();
-            for (Comment c : translationComments.values()) {
-                if (c.getUsername().equals(username))
-                    commentsOfUser.add(c);
-            }
-            commentsOfUsers.put(username, new MutableLiveData<>(commentsOfUser));
-        }
-        return commentsOfUsers.get(username);
+    public void getCommentsOfUser(String username, OnCommentsCompleteListener actionComplete) {
+        executor.execute(() -> {
+            List<Comment> result =  local.getCommentsOfUser(username);
+            MyApplication.mainHandler.post(() -> actionComplete.onComplete(result));
+        });
     }
 
     public LiveData<List<Post>> getAllPosts() {
-        if (allPosts == null) {
-            List<Post> posts = new ArrayList<>(translationPosts.values());
-            Collections.sort(posts, (o1, o2) -> o1.getPostID().compareTo(o2.getPostID()));
-            allPosts = new MutableLiveData<>(posts);
-        }
+
         return allPosts;
     }
 
-    public LiveData<List<Post>> getPostsOfUser(String username) {
-        if (!postsOfUsers.containsKey(username)) {
-            List<Post> posts = new ArrayList<>();
-            for (Post p : translationPosts.values())
-                if (p.getPostUsername().equals(username))
-                    posts.add(p);
-            Collections.sort(posts, (o1, o2) -> o1.getPostID().compareTo(o2.getPostID()));
-            postsOfUsers.put(username, new MutableLiveData<>(posts));
-        }
-
-        return postsOfUsers.get(username);
+    public void getPostsOfUser(String username, OnPostsCompleteListener actionComplete) {
+        executor.execute(() -> {
+            List<Post> result =  local.getPostsOfUser(username);
+            MyApplication.mainHandler.post(() -> actionComplete.onComplete(result));
+        });
     }
 
-    public User getByUserName(String username) {
-        return users.get(username);
+    public void getUserByID(String username, GetUserListener listener) {
+        executor.execute(() -> {
+            User u = local.getByUserName(username);
+            MyApplication.mainHandler.post(() -> listener.onComplete(u));
+        });
+    }
+
+    public void getCommentByID(String commentID, GetCommentListener listener) {
+        executor.execute(() -> {
+            Comment c = local.getCommentByID(commentID);
+            MyApplication.mainHandler.post(() -> listener.onComplete(c));
+        });
+    }
+
+    public enum UserLoadingState {
+        loading,
+        loaded
+    }
+
+    public enum PostLoadingState {
+        loading,
+        loaded
+    }
+
+    public enum CommentLoadingState {
+        loading,
+        loaded
+    }
+    public  void uploadImage(Bitmap imageBmp, String name, final UploadImageListener listener){
+        MyModelFirebase.uploadImage(imageBmp,name,listener);
+    }
+    public  void editUser(User user, String newPhoto, OnDBActionComplete actionComplete){
+        //TODO: implement
     }
 }

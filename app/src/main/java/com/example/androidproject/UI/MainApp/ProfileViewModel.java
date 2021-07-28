@@ -4,20 +4,23 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.androidproject.Model.Database.MyModel;
 import com.example.androidproject.Model.Entity.User;
+import com.example.androidproject.Model.Listeners.GetUserListener;
+import com.example.androidproject.Model.Listeners.OnDBActionComplete;
 
 public class ProfileViewModel extends ViewModel {
     private User user;
     public ProfileViewModel(){
-        //get user from the model
     }
-    public User getUser(String username){
-        user = MyModel.instance.getByUserName(username);
-        return user;
+    public void getUser(String username, GetUserListener listener){
+        MyModel.instance.getUserByID(username, user1 -> {
+            listener.onComplete(user1);
+            user = user1;
+        });
+    }
+    public void editUser(User u, String newPhoto, OnDBActionComplete actionComplete){
+        MyModel.instance.editUser(u,newPhoto, actionComplete);
     }
     public User getUser(){
         return user;
-    }
-    public User getCurrentUser(){
-        return getUser(MyModel.CURRENT_USER);
     }
 }

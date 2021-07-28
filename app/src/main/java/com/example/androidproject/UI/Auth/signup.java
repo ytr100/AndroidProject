@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 
 import com.example.androidproject.R;
 import com.google.android.material.snackbar.Snackbar;
@@ -27,6 +28,7 @@ public class signup extends Fragment {
         EditText email = root.findViewById(R.id.signup_email);
         EditText password = root.findViewById(R.id.signup_password);
         Button btn = root.findViewById(R.id.signup_btn);
+        ProgressBar progressBar = root.findViewById(R.id.signup_progressBar);//TODO: implement
 
         btn.setOnClickListener(v -> {}
 //                signUpViewModel.signUp(

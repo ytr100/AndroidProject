@@ -21,6 +21,7 @@ import com.example.androidproject.Model.Listeners.OnDeleteClickListener;
 import com.example.androidproject.Model.Listeners.OnEditClickListener;
 import com.example.androidproject.Model.Listeners.OnItemClickListener;
 import com.example.androidproject.R;
+import com.squareup.picasso.Picasso;
 
 class RowViewHolder extends RecyclerView.ViewHolder {
     TextView username;
@@ -55,8 +56,14 @@ class RowViewHolder extends RecyclerView.ViewHolder {
         username.setText(b.getUsername());
         title.setText(b.getTitle());
         content.setText(b.getContent());
-        photo.setVisibility(View.VISIBLE);//TODO: add photo support
-        edit.setVisibility(MyModel.CURRENT_USER.equals(b.getUsername())  ? View.VISIBLE : View.GONE);
+        photo.setImageResource(R.drawable.ic_launcher_background);
+        if(b.getPhoto() != null && !b.getPhoto().equals("")){
+            Picasso.get().load(b.getPhoto()).placeholder(R.drawable.ic_launcher_background).error(R.drawable.ic_launcher_background).into(photo);
+        }else{
+            photo.setVisibility(View.GONE);
+        }
+
+        edit.setVisibility(MyModel.CURRENT_USER.equals(b.getUsername())  ? View.VISIBLE : View.GONE);//TODO: add current user to model
         delete.setVisibility(MyModel.CURRENT_USER.equals(b.getUsername())  ? View.VISIBLE : View.GONE);
         edit.setOnClickListener(v -> editClickListener.onClick(b));
         delete.setOnClickListener(v -> deleteClickListener.onClick(b));

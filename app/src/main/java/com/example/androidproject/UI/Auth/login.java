@@ -13,6 +13,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
+
 import com.example.androidproject.R;
 
 import java.util.List;
@@ -29,7 +31,8 @@ public class login extends Fragment {
         EditText email = root.findViewById(R.id.login_email);
         EditText password = root.findViewById(R.id.login_password);
         Button btn = root.findViewById(R.id.login_btn);
-        btn.setOnClickListener(Navigation.createNavigateOnClickListener(R.id.action_login_to_appActivity));
+        ProgressBar progressBar = root.findViewById(R.id.login_progressBar);//TODO: implement
+        btn.setOnClickListener(Navigation.createNavigateOnClickListener(R.id.action_login_to_appActivity));//TODO: auth
 
 //        Model.instance.getUserByEmail("tamir@gmail.com", (user) -> {
 //            LiveData<List<User>> allList = Model.instance.getAllUsers();

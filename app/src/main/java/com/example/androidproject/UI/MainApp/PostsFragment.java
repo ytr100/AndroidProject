@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -18,6 +19,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.androidproject.MainappNavigationDirections;
+import com.example.androidproject.Model.Database.MyModel;
 import com.example.androidproject.Model.Entity.Post;
 import com.example.androidproject.Model.Listeners.OnDeleteClickListener;
 import com.example.androidproject.Model.Listeners.OnEditClickListener;
@@ -39,20 +41,29 @@ public class PostsFragment extends Fragment {
         View root = inflater.inflate(R.layout.fragment_posts, container, false);
 
         RecyclerView postsList = root.findViewById(R.id.main_posts_list);
+        ProgressBar progressBar = root.findViewById(R.id.main_posts_progressBar);
+        progressBar.setVisibility(View.GONE);
         postsList.setLayoutManager(new LinearLayoutManager(root.getContext()));
         PostsListAdapter adapter = new PostsListAdapter();
 
-        setListeners(adapter, root);
+        setListeners(adapter, root, progressBar);
         postsList.setAdapter(adapter);
-        username = PostsFragmentArgs.fromBundle(getArguments()).getUsername();//TODO: only posts from user or all if null
-        initViewModel(adapter);
+        username = PostsFragmentArgs.fromBundle(getArguments()).getUsername();//only posts from user or all if null
+        initViewModel(adapter,progressBar);
         setHasOptionsMenu(true);
+
+
+        MyModel.instance.postsLoadingState.observe(getViewLifecycleOwner(), postLoadingState -> {
+            if (postLoadingState == MyModel.PostLoadingState.loading) {
+                progressBar.setVisibility(View.VISIBLE);
+            }
+        });
         return root;
     }
 
-    private void setListeners(PostsListAdapter adapter, View root) {
+    private void setListeners(PostsListAdapter adapter, View root, ProgressBar progressBar) {
         adapter.setOnListItemClickListener(position -> {
-                    Post p = postsViewModel.data.getValue().get(position);
+                    Post p = postsViewModel.getCurrent().get(position);
                     NavDirections action = PostsFragmentDirections.actionPostsFragmentToCommentsFragment(p.getPostID(), null);
                     Navigation.findNavController(root).navigate(action);
                 }
@@ -66,11 +77,12 @@ public class PostsFragment extends Fragment {
                 }
         );
         adapter.setDeleteListener(holdable -> {
+
                     AlertDialog.Builder builder = new AlertDialog.Builder(root.getContext());
                     DialogInterface.OnClickListener listener = (dialog, which) -> {
                         if (which == DialogInterface.BUTTON_POSITIVE) {
                             Post p = (Post) holdable;
-                            postsViewModel.deletePost(p);
+                            postsViewModel.deletePost(p, () -> progressBar.setVisibility(View.GONE));
                         }
                     };
                     builder.setMessage("Are you sure?")
@@ -82,12 +94,20 @@ public class PostsFragment extends Fragment {
 
     }
 
-    private void initViewModel(PostsListAdapter adapter) {
+    private void initViewModel(PostsListAdapter adapter, ProgressBar progressBar) {
         if (username != null) {//view all posts of user
-            postsViewModel.getPostsOfUser(username).observe(getViewLifecycleOwner(), comments ->
-                    adapter.notifyDataSetChanged());
-        } else postsViewModel.getAllPosts().observe(getViewLifecycleOwner(), comments ->
-                adapter.notifyDataSetChanged());
+            postsViewModel.getAllPosts().observe(getViewLifecycleOwner(), posts ->
+                    postsViewModel.getPostsOfUser(username, posts1 -> {
+                        adapter.notifyDataSetChanged();
+                        progressBar.setVisibility(View.GONE);
+                    })
+            );
+        }//view all posts
+        else postsViewModel.getAllPosts().observe(getViewLifecycleOwner(), posts ->
+                postsViewModel.getPosts(posts1 -> {
+                    adapter.notifyDataSetChanged();
+                    progressBar.setVisibility(View.GONE);
+                }));
     }
 
     @Override
@@ -127,14 +147,14 @@ public class PostsFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull RowViewHolder holder, int position) {
-            Post p = postsViewModel.data.getValue().get(position);
+            Post p = postsViewModel.getCurrent().get(position);
             Log.d("TAG", "onBindViewHolder " + position);
             holder.bind(p);
         }
 
         @Override
         public int getItemCount() {
-            List<Post> posts = postsViewModel.data.getValue();
+            List<Post> posts = postsViewModel.getCurrent();
             if (posts == null) return 0;
             return posts.size();
         }

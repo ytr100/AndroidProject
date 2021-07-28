@@ -2,19 +2,25 @@ package com.example.androidproject.Model.Entity;
 
 import androidx.annotation.NonNull;
 import androidx.room.Embedded;
+import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
-
+@Entity
 public class Comment implements Holdable {
+    public void setCommentMessage(Message commentMessage) {
+        this.commentMessage = commentMessage;
+    }
+
     @Embedded
-    private final Message commentMessage;
-    //foreign keys
+    private Message commentMessage;
     @NonNull
     private String postID;
-    //private Long lastUpdated;
+    private Long lastUpdated;
     private boolean isDeleted;
     @PrimaryKey
     @NonNull
@@ -22,13 +28,51 @@ public class Comment implements Holdable {
     @NonNull
     private String commentUsername;
     private String parentCommentID;
-    public Comment(@NotNull String title, String content, String photo) {
-        this.postID = title; //TODO: get from db
-        this.commentID = title; //TODO: get from db
-        this.commentUsername = title; //TODO: model method should create comments
-        this.parentCommentID = title; //TODO: model method should create comments
-        this.commentMessage = new Message(title, content, photo);
+    final public static String COMMENT_ID = "commentID";
+    final public static String MESSAGE = "commentMessage";
+    final public static String LAST_UPDATED = "lastUpdated";
+    final public static String IS_DELETED = "isDeleted";
+    final public static String USERNAME = "commentUsername";
+    final public static String PARENT_COMMENT_ID = "parentCommentID";
+    final public static String POST_ID = "postID";
+
+    public Comment(Message m, String username, String postID,String parentCommentID) {
+        this.commentUsername = username;
+        this.parentCommentID = parentCommentID;
+        this.commentMessage = m;
         this.isDeleted = false;
+        this.postID = postID;
+    }
+    public static Comment fromJson(Map<String, Object> json) {
+        Comment c = new Comment();
+       c.setCommentMessage((Message) json.get(MESSAGE));
+       c.setCommentID((String)json.get(COMMENT_ID));
+       c.setDeleted((boolean) json.get(IS_DELETED));
+       c.setPostID((String)json.get(POST_ID));
+       if(json.get(PARENT_COMMENT_ID) == null)
+            c.setParentCommentID(null);
+       else c.setParentCommentID((String)json.get(PARENT_COMMENT_ID));
+       c.setCommentUsername((String)json.get(USERNAME));
+
+//        Timestamp ts = (Timestamp) json.get(LAST_UPDATED);
+//        if (ts != null)
+//            post.setLastUpdated(ts.getSeconds());
+//        else
+//            post.setLastUpdated(0L);
+        return c;
+    }
+    public Map<String, Object> toJsonWithoutID() {
+        Map<String, Object> json = new HashMap<>();
+        json.put(USERNAME, commentUsername);
+        //json.put(LAST_UPDATED, FieldValue.serverTimestamp());
+        json.put(IS_DELETED, isDeleted);
+        json.put(MESSAGE,commentMessage);
+        json.put(PARENT_COMMENT_ID,parentCommentID);
+        json.put(POST_ID,postID);
+        return json;
+    }
+
+    public Comment() {
     }
 
     public boolean isDeleted() {

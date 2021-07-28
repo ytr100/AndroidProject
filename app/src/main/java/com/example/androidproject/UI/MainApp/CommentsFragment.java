@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.androidproject.MainappNavigationDirections;
+import com.example.androidproject.Model.Database.MyModel;
 import com.example.androidproject.Model.Entity.Comment;
 import com.example.androidproject.Model.Listeners.OnDeleteClickListener;
 import com.example.androidproject.Model.Listeners.OnEditClickListener;
@@ -42,7 +44,8 @@ public class CommentsFragment extends Fragment {
         setHasOptionsMenu(true);
 
         RecyclerView commentsList = root.findViewById(R.id.main_comments_list);
-
+        ProgressBar progressBar = root.findViewById(R.id.main_comments_progressBar);
+        progressBar.setVisibility(View.GONE);
         commentsList.setLayoutManager(new LinearLayoutManager(root.getContext()));
         CommentsListAdapter adapter = new CommentsListAdapter();
 
@@ -53,15 +56,21 @@ public class CommentsFragment extends Fragment {
 
 
         commentsList.setAdapter(adapter);
-        initViewModel(adapter);
-        setListeners(adapter,root);
+        initViewModel(adapter,progressBar);
+        setListeners(adapter,root,progressBar);
+
+        MyModel.instance.commentsLoadingState.observe(getViewLifecycleOwner(),commentLoadingState -> {
+            if (commentLoadingState == MyModel.CommentLoadingState.loading) {
+                progressBar.setVisibility(View.VISIBLE);
+            }
+        });
 
         return root;
     }
 
-    private void setListeners(CommentsListAdapter adapter, View root) {
+    private void setListeners(CommentsListAdapter adapter, View root, ProgressBar progressBar) {
         adapter.setOnListItemClickListener(position -> {
-            Comment c = commentsViewModel.data.getValue().get(position);
+            Comment c = commentsViewModel.getCurrent().get(position);
             CommentsFragmentDirections.ActionCommentsFragmentSelf action = CommentsFragmentDirections.actionCommentsFragmentSelf(c.getPostID(), c.getCommentID());//c is the parent comment now
             Navigation.findNavController(root).navigate(action);
         });
@@ -76,7 +85,7 @@ public class CommentsFragment extends Fragment {
                     DialogInterface.OnClickListener listener = (dialog, which) -> {
                         if (which == DialogInterface.BUTTON_POSITIVE) {
                             Comment c = (Comment) holdable;
-                            commentsViewModel.deleteComment(c);
+                            commentsViewModel.deleteComment(c,() -> progressBar.setVisibility(View.GONE));
                         }
                     };
                     builder.setMessage("Are you sure?")
@@ -88,16 +97,25 @@ public class CommentsFragment extends Fragment {
 
     }
 
-    private void initViewModel(CommentsListAdapter adapter) {
+    private void initViewModel(CommentsListAdapter adapter,ProgressBar progressBar) {
         if (username != null) {//view all comments of user
-            commentsViewModel.getCommentsOfUser(username).observe(getViewLifecycleOwner(), comments ->
-                    adapter.notifyDataSetChanged());
+           commentsViewModel.getAllComments().observe(getViewLifecycleOwner(),comments ->
+                   commentsViewModel.getCommentsOfUser(username, comments1 -> {
+               adapter.notifyDataSetChanged();
+               progressBar.setVisibility(View.GONE);
+           }));
         } else if (parentCommentID != null) {//nested comment
-            commentsViewModel.getCommentsOfComment(parentCommentID).observe(getViewLifecycleOwner(), comments ->
-                    adapter.notifyDataSetChanged());
+            commentsViewModel.getAllComments().observe(getViewLifecycleOwner(),comments ->
+                    commentsViewModel.getCommentsOfComment(parentCommentID, comments1 -> {
+                adapter.notifyDataSetChanged();
+                progressBar.setVisibility(View.GONE);
+            }));
         } else {//regular comment
-            commentsViewModel.getCommentsOfPost(postID).observe(getViewLifecycleOwner(), comments ->
-                    adapter.notifyDataSetChanged());
+            commentsViewModel.getAllComments().observe(getViewLifecycleOwner(),comments ->
+                    commentsViewModel.getCommentsOfPost(postID, comments1 -> {
+                adapter.notifyDataSetChanged();
+                progressBar.setVisibility(View.GONE);
+            }));
         }
     }
 
@@ -139,14 +157,14 @@ public class CommentsFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull RowViewHolder holder, int position) {
 
-            Comment c = commentsViewModel.data.getValue().get(position);
+            Comment c = commentsViewModel.getCurrent().get(position);
             Log.d("TAG", "onBindViewHolder " + position);
             holder.bind(c);
         }
 
         @Override
         public int getItemCount() {
-            List<Comment> comments = commentsViewModel.data.getValue();
+            List<Comment> comments = commentsViewModel.getCurrent();
             if (comments == null) return 0;
             return comments.size();
         }
