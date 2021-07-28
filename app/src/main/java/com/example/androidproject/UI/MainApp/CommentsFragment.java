@@ -18,6 +18,7 @@ import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.androidproject.MainappNavigationDirections;
 import com.example.androidproject.Model.Database.MyModel;
@@ -35,6 +36,7 @@ public class CommentsFragment extends Fragment {
     private String postID;
     private String parentCommentID;
     private String username;
+    private SwipeRefreshLayout swipeRefreshLayout;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -45,6 +47,7 @@ public class CommentsFragment extends Fragment {
 
         RecyclerView commentsList = root.findViewById(R.id.main_comments_list);
         ProgressBar progressBar = root.findViewById(R.id.main_comments_progressBar);
+        swipeRefreshLayout = root.findViewById(R.id.main_comments_refresh);
         progressBar.setVisibility(View.GONE);
         commentsList.setLayoutManager(new LinearLayoutManager(root.getContext()));
         CommentsListAdapter adapter = new CommentsListAdapter();
@@ -56,12 +59,16 @@ public class CommentsFragment extends Fragment {
 
 
         commentsList.setAdapter(adapter);
-        initViewModel(adapter,progressBar);
-        setListeners(adapter,root,progressBar);
+        initViewModel(adapter, progressBar);
+        setListeners(adapter, root, progressBar);
+        swipeRefreshLayout.setOnRefreshListener(() -> commentsViewModel.refresh(() -> {
+        }));
 
-        MyModel.instance.commentsLoadingState.observe(getViewLifecycleOwner(),commentLoadingState -> {
+        MyModel.instance.commentsLoadingState.observe(getViewLifecycleOwner(), commentLoadingState -> {
             if (commentLoadingState == MyModel.CommentLoadingState.loading) {
                 progressBar.setVisibility(View.VISIBLE);
+            }else{
+                swipeRefreshLayout.setRefreshing(false);
             }
         });
 
@@ -85,7 +92,10 @@ public class CommentsFragment extends Fragment {
                     DialogInterface.OnClickListener listener = (dialog, which) -> {
                         if (which == DialogInterface.BUTTON_POSITIVE) {
                             Comment c = (Comment) holdable;
-                            commentsViewModel.deleteComment(c,() -> progressBar.setVisibility(View.GONE));
+                            commentsViewModel.deleteComment(c, () -> {
+                                progressBar.setVisibility(View.GONE);
+                                swipeRefreshLayout.setRefreshing(false);
+                            });
                         }
                     };
                     builder.setMessage("Are you sure?")
@@ -97,25 +107,28 @@ public class CommentsFragment extends Fragment {
 
     }
 
-    private void initViewModel(CommentsListAdapter adapter,ProgressBar progressBar) {
+    private void initViewModel(CommentsListAdapter adapter, ProgressBar progressBar) {
         if (username != null) {//view all comments of user
-           commentsViewModel.getAllComments().observe(getViewLifecycleOwner(),comments ->
-                   commentsViewModel.getCommentsOfUser(username, comments1 -> {
-               adapter.notifyDataSetChanged();
-               progressBar.setVisibility(View.GONE);
-           }));
+            commentsViewModel.getAllComments().observe(getViewLifecycleOwner(), comments ->
+                    commentsViewModel.getCommentsOfUser(username, comments1 -> {
+                        adapter.notifyDataSetChanged();
+                        progressBar.setVisibility(View.GONE);
+                        swipeRefreshLayout.setRefreshing(false);
+                    }));
         } else if (parentCommentID != null) {//nested comment
-            commentsViewModel.getAllComments().observe(getViewLifecycleOwner(),comments ->
+            commentsViewModel.getAllComments().observe(getViewLifecycleOwner(), comments ->
                     commentsViewModel.getCommentsOfComment(parentCommentID, comments1 -> {
-                adapter.notifyDataSetChanged();
-                progressBar.setVisibility(View.GONE);
-            }));
+                        adapter.notifyDataSetChanged();
+                        progressBar.setVisibility(View.GONE);
+                        swipeRefreshLayout.setRefreshing(false);
+                    }));
         } else {//regular comment
-            commentsViewModel.getAllComments().observe(getViewLifecycleOwner(),comments ->
+            commentsViewModel.getAllComments().observe(getViewLifecycleOwner(), comments ->
                     commentsViewModel.getCommentsOfPost(postID, comments1 -> {
-                adapter.notifyDataSetChanged();
-                progressBar.setVisibility(View.GONE);
-            }));
+                        adapter.notifyDataSetChanged();
+                        progressBar.setVisibility(View.GONE);
+                        swipeRefreshLayout.setRefreshing(false);
+                    }));
         }
     }
 

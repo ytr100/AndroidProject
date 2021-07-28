@@ -34,7 +34,7 @@ public class AppActivity extends AppCompatActivity {
                 break;
             case R.id.menu_profile:
                 //TODO: get current user from db
-                MainappNavigationDirections.ActionGlobalProfileFragment action = MainappNavigationDirections.actionGlobalProfileFragment(MyModel.CURRENT_USER);
+                MainappNavigationDirections.ActionGlobalProfileFragment action = MainappNavigationDirections.actionGlobalProfileFragment(MyModel.CURRENT_USER.getUsername());
                 navController.navigate(action);
                 return true;
             case R.id.menu_add:
@@ -47,5 +47,11 @@ public class AppActivity extends AppCompatActivity {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_app, menu);
         return true;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        MyModel.instance.signOutUser();//TODO:progress bar? add sign out to menu?
     }
 }

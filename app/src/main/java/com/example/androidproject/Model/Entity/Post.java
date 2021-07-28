@@ -1,9 +1,16 @@
 package com.example.androidproject.Model.Entity;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
 import androidx.annotation.NonNull;
 import androidx.room.Embedded;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
+
+import com.example.androidproject.MyApplication;
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.FieldValue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,11 +38,11 @@ public class Post implements Holdable {
         post.setPostID((String) json.get(ID));
         post.setPostMessage((Message)json.get(MESSAGE));
         post.setPostUsername((String) json.get(USERNAME));
-//        Timestamp ts = (Timestamp) json.get(LAST_UPDATED);
-//        if (ts != null)
-//            post.setLastUpdated(ts.getSeconds());
-//        else
-//            post.setLastUpdated(0L);
+        Timestamp ts = (Timestamp) json.get(LAST_UPDATED);
+        if (ts != null)
+            post.setLastUpdated(ts.getSeconds());
+        else
+            post.setLastUpdated(0L);
         post.setDeleted((boolean) json.get(IS_DELETED));
         return post;
     }
@@ -43,7 +50,7 @@ public class Post implements Holdable {
     public Map<String, Object> toJsonWithoutID() {
         Map<String, Object> json = new HashMap<>();
         json.put(USERNAME, postUsername);
-        //json.put(LAST_UPDATED, FieldValue.serverTimestamp());
+        json.put(LAST_UPDATED, FieldValue.serverTimestamp());
         json.put(IS_DELETED, isDeleted);
         json.put(MESSAGE,postMessage);
         return json;
@@ -132,5 +139,16 @@ public class Post implements Holdable {
 
     public void setLastUpdated(Long lastUpdated) {
         this.lastUpdated = lastUpdated;
+    }
+    private static final String POST_LAST_UPDATE_DATE = "postLastUpdate";
+
+    static public void setLocalLastUpdateTime(Long ts){
+        SharedPreferences.Editor editor = MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
+        editor.putLong(POST_LAST_UPDATE_DATE,ts);
+        editor.commit();
+    }
+    static public Long getLocalLastUpdateTime(){
+        return MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE)
+                .getLong(POST_LAST_UPDATE_DATE,0);
     }
 }

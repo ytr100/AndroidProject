@@ -36,7 +36,7 @@ public class CommentsViewModel extends ViewModel {
     }
 
     public void getCommentsOfUser(String username, OnCommentsCompleteListener actionComplete) {
-        MyModel.instance.getCommentsOfComment(username, comments -> {
+        MyModel.instance.getCommentsOfUser(username, comments -> {
             queryResult = comments;
             actionComplete.onComplete(queryResult);
         });
@@ -54,5 +54,8 @@ public class CommentsViewModel extends ViewModel {
         if (queryResult != null)
             return queryResult;
         return new ArrayList<>();
+    }
+    public void refresh(OnDBActionComplete actionComplete){
+        MyModel.instance.getCommentsFromRemote(actionComplete);
     }
 }

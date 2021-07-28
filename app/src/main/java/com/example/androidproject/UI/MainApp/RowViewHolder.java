@@ -63,8 +63,8 @@ class RowViewHolder extends RecyclerView.ViewHolder {
             photo.setVisibility(View.GONE);
         }
 
-        edit.setVisibility(MyModel.CURRENT_USER.equals(b.getUsername())  ? View.VISIBLE : View.GONE);//TODO: add current user to model
-        delete.setVisibility(MyModel.CURRENT_USER.equals(b.getUsername())  ? View.VISIBLE : View.GONE);
+        edit.setVisibility(MyModel.CURRENT_USER.getUsername().equals(b.getUsername())  ? View.VISIBLE : View.GONE);
+        delete.setVisibility(MyModel.CURRENT_USER.getUsername().equals(b.getUsername())  ? View.VISIBLE : View.GONE);
         edit.setOnClickListener(v -> editClickListener.onClick(b));
         delete.setOnClickListener(v -> deleteClickListener.onClick(b));
         username.setOnClickListener(v -> {

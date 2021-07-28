@@ -10,24 +10,15 @@ import com.example.androidproject.Model.Entity.Post;
 import com.example.androidproject.Model.Entity.User;
 import com.example.androidproject.Model.Listeners.GetCommentListener;
 import com.example.androidproject.Model.Listeners.GetPostListener;
+import com.example.androidproject.Model.Listeners.OnDBActionComplete;
 
 import java.util.List;
 
 public class LocalDataBase  {//every method except LiveData must be called from a background thread
 
-    public void insertPost(Message m, String username, GetPostListener actionComplete) {
-        Post p = new Post();
-        p.setPostID(MyModel.NEXT_POST_ID);
-        MyModel.instance.incrementPostID();
-        p.setPostUsername(username);
-        p.setDeleted(false);
-        p.setPostMessage(m);
-        LocalDB.db.postDao().insertAllPosts(p);
-        actionComplete.onComplete(p);
-    }
 
 
-    public void editPost(Post p) {
+    public void savePost(Post p) {
 
         LocalDB.db.postDao().insertAllPosts(p);
     }
@@ -37,23 +28,14 @@ public class LocalDataBase  {//every method except LiveData must be called from 
         LocalDB.db.postDao().delete(p);
 
     }
-
-
-    public void insertComment(Message m, String username, String postID, String parentCommentID, GetCommentListener actionComplete) {
-        Comment c = new Comment();
-        c.setCommentID(MyModel.NEXT_COMMENT_ID);
-        MyModel.instance.incrementCommentID();
-        c.setCommentUsername(username);
-        c.setPostID(postID);
-        c.setParentCommentID(parentCommentID);
-        c.setDeleted(false);
-        c.setCommentMessage(m);
-        LocalDB.db.commentDao().insertAllComments(c);
-        actionComplete.onComplete(c);
+    public void saveUser(User u){
+        LocalDB.db.userDao().insertAllUsers(u);
+    }
+    public void deleteUser(User u){
+        LocalDB.db.userDao().delete(u);
     }
 
-
-    public void editComment(Comment c) {
+    public void saveComment(Comment c) {
 
         LocalDB.db.commentDao().insertAllComments(c);
     }

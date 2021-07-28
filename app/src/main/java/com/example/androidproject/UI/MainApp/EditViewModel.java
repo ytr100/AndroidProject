@@ -26,7 +26,7 @@ public class EditViewModel extends ViewModel {
         MyModel.instance.editComment(c, actionComplete);
     }
     public void getCurrentUser(GetUserListener listener){
-        MyModel.instance.getUserByID(MyModel.CURRENT_USER, listener);
+        listener.onComplete(MyModel.CURRENT_USER);
     }
     public void getPost(String postID, GetPostListener listener){
          MyModel.instance.getPostByID(postID,listener);

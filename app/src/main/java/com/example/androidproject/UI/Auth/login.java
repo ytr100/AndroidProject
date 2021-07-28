@@ -16,6 +16,7 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 
 import com.example.androidproject.R;
+import com.google.android.material.snackbar.Snackbar;
 
 import java.util.List;
 
@@ -31,17 +32,27 @@ public class login extends Fragment {
         EditText email = root.findViewById(R.id.login_email);
         EditText password = root.findViewById(R.id.login_password);
         Button btn = root.findViewById(R.id.login_btn);
-        ProgressBar progressBar = root.findViewById(R.id.login_progressBar);//TODO: implement
-        btn.setOnClickListener(Navigation.createNavigateOnClickListener(R.id.action_login_to_appActivity));//TODO: auth
+        ProgressBar progressBar = root.findViewById(R.id.login_progressBar);
+        btn.setOnClickListener(v -> {
+            btn.setEnabled(false);
+            progressBar.setVisibility(View.VISIBLE);
+            loginViewModel.signIn(
+                    email.getText().toString(),
+                    password.getText().toString(),
+                    mail -> {
+                        Snackbar.make(root, "email("+mail+") is good", 5 * 1000).show();
+                        progressBar.setVisibility(View.GONE);
+                        btn.setEnabled(true);
+                        Navigation.findNavController(v).navigate(R.id.action_login_to_appActivity);
+                    },
+                    mail -> {
+                        Snackbar.make(root, "invalid parameters (email or password)", 5 * 1000).show();
+                        progressBar.setVisibility(View.GONE);
+                        btn.setEnabled(true);
+                    }
+            );
+        });
 
-//        Model.instance.getUserByEmail("tamir@gmail.com", (user) -> {
-//            LiveData<List<User>> allList = Model.instance.getAllUsers();
-////                                LiveData<List<Post>> list = Model.instance.getPostsFromUser(user);
-//            allList.observe(getViewLifecycleOwner(), allPosts -> {
-//                for (User p : allPosts)
-//                    Log.d("TAG", p.getUsername() + " : " + " by " + p.getLastUpdated() + " !!!");
-//            });
-//        });
         return root;
     }
 }

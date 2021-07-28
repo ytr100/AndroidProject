@@ -44,5 +44,7 @@ public class PostsViewModel extends ViewModel {
     }
 
 
-
+    public void refresh(OnDBActionComplete actionComplete) {
+        MyModel.instance.getPostsFromRemote(actionComplete);
+    }
 }

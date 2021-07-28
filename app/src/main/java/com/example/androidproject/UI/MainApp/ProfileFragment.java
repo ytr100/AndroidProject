@@ -1,5 +1,6 @@
 package com.example.androidproject.UI.MainApp;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -17,11 +18,13 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 
 import com.example.androidproject.Model.Database.MyModel;
+import com.example.androidproject.Model.Entity.User;
 import com.example.androidproject.R;
 import com.squareup.picasso.Picasso;
 
@@ -47,26 +50,44 @@ public class ProfileFragment extends Fragment {
         photo = root.findViewById(R.id.profile_photo);
         ImageButton takePic = root.findViewById(R.id.profile_picture_btn);
         ProgressBar progressBar = root.findViewById(R.id.profile_progressBar);
+        ImageButton deleteBtn = root.findViewById(R.id.profile_delete);
 
-        if (username.equals(MyModel.CURRENT_USER)) {//TODO: auth
+        if (username.equals(MyModel.CURRENT_USER.getUsername())) {
+            User user = profileViewModel.getCurrentUser();
             takePic.setOnClickListener(v -> {
                 dispatchTakePictureIntent();
                 if (imageBitmap != null) {
                     takePic.setEnabled(false);
                     progressBar.setVisibility(View.VISIBLE);
-                    MyModel.instance.uploadImage(imageBitmap, username, url -> {//TODO: auth
-                        profileViewModel.getUser(username, user ->
-                                profileViewModel.editUser(user, url, () -> {
-                            takePic.setEnabled(true);
-                            progressBar.setVisibility(View.GONE);
-                        }));
-                    });
+                    MyModel.instance.uploadImage(imageBitmap, username, url -> profileViewModel.editUser(user, url, () -> {
+                                takePic.setEnabled(true);
+                                progressBar.setVisibility(View.GONE);
+                                if (user.getPhoto() != null && !user.getPhoto().equals("")) {
+                                    Picasso.get().load(user.getPhoto()).placeholder(R.drawable.ic_launcher_background).error(R.drawable.ic_launcher_background).into(photo);
+                                }
+                            }
+                    ));
                 }
-
             });
-        } else takePic.setVisibility(View.GONE);
-
-
+            deleteBtn.setOnClickListener(v -> {
+                AlertDialog.Builder builder = new AlertDialog.Builder(root.getContext());
+                DialogInterface.OnClickListener listener = (dialog, which) -> {
+                    if (which == DialogInterface.BUTTON_POSITIVE) {
+                        profileViewModel.deleteUser(user, () -> {
+                            progressBar.setVisibility(View.GONE);
+                            getActivity().finish();
+                        });
+                    }
+                };
+                builder.setMessage("Are you sure?")
+                        .setPositiveButton("Yes", listener)
+                        .setNegativeButton("No", listener)
+                        .show();
+            });
+        } else {
+            takePic.setVisibility(View.GONE);
+            deleteBtn.setVisibility(View.GONE);
+        }
         progressBar.setVisibility(View.VISIBLE);
         profileViewModel.getUser(username, user -> {
             userText.setText(user.getUsername());

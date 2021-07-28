@@ -17,6 +17,7 @@ import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.androidproject.MainappNavigationDirections;
 import com.example.androidproject.Model.Database.MyModel;
@@ -32,7 +33,7 @@ import java.util.List;
 public class PostsFragment extends Fragment {
     PostsViewModel postsViewModel;
     private String username;
-
+    private SwipeRefreshLayout swipeRefreshLayout;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -43,6 +44,7 @@ public class PostsFragment extends Fragment {
         RecyclerView postsList = root.findViewById(R.id.main_posts_list);
         ProgressBar progressBar = root.findViewById(R.id.main_posts_progressBar);
         progressBar.setVisibility(View.GONE);
+        swipeRefreshLayout = root.findViewById(R.id.main_comments_refresh);
         postsList.setLayoutManager(new LinearLayoutManager(root.getContext()));
         PostsListAdapter adapter = new PostsListAdapter();
 
@@ -52,10 +54,13 @@ public class PostsFragment extends Fragment {
         initViewModel(adapter,progressBar);
         setHasOptionsMenu(true);
 
-
+        swipeRefreshLayout.setOnRefreshListener(() -> postsViewModel.refresh(() -> {
+        }));
         MyModel.instance.postsLoadingState.observe(getViewLifecycleOwner(), postLoadingState -> {
             if (postLoadingState == MyModel.PostLoadingState.loading) {
                 progressBar.setVisibility(View.VISIBLE);
+            }else{
+                swipeRefreshLayout.setRefreshing(false);
             }
         });
         return root;
@@ -82,7 +87,10 @@ public class PostsFragment extends Fragment {
                     DialogInterface.OnClickListener listener = (dialog, which) -> {
                         if (which == DialogInterface.BUTTON_POSITIVE) {
                             Post p = (Post) holdable;
-                            postsViewModel.deletePost(p, () -> progressBar.setVisibility(View.GONE));
+                            postsViewModel.deletePost(p, () ->{
+                                progressBar.setVisibility(View.GONE);
+                            swipeRefreshLayout.setRefreshing(false);
+                            });
                         }
                     };
                     builder.setMessage("Are you sure?")
@@ -100,6 +108,7 @@ public class PostsFragment extends Fragment {
                     postsViewModel.getPostsOfUser(username, posts1 -> {
                         adapter.notifyDataSetChanged();
                         progressBar.setVisibility(View.GONE);
+                        swipeRefreshLayout.setRefreshing(false);
                     })
             );
         }//view all posts
@@ -107,6 +116,7 @@ public class PostsFragment extends Fragment {
                 postsViewModel.getPosts(posts1 -> {
                     adapter.notifyDataSetChanged();
                     progressBar.setVisibility(View.GONE);
+                    swipeRefreshLayout.setRefreshing(false);
                 }));
     }
 

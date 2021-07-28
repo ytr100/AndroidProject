@@ -14,6 +14,7 @@ import com.example.androidproject.Model.Entity.User;
 import com.example.androidproject.Model.Listeners.GetCommentListener;
 import com.example.androidproject.Model.Listeners.GetPostListener;
 import com.example.androidproject.Model.Listeners.GetUserListener;
+import com.example.androidproject.Model.Listeners.OnAuthenticationResult;
 import com.example.androidproject.Model.Listeners.OnCommentsCompleteListener;
 import com.example.androidproject.Model.Listeners.OnDBActionComplete;
 import com.example.androidproject.Model.Listeners.OnPostsCompleteListener;
@@ -28,9 +29,7 @@ public class MyModel {
 
 
     public static final MyModel instance = new MyModel();
-    public static final String NEXT_COMMENT_ID = "8";//TODO: auto generate ids
-    public static String CURRENT_USER = "C";//TODO: authentication
-    public static String NEXT_POST_ID = "4";//TODO: auto generate ids
+    public static User CURRENT_USER = null;
     public final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final LocalDataBase local;
     public LiveData<List<User>> allUsers;
@@ -48,121 +47,214 @@ public class MyModel {
         allPosts = local.getAllPosts();
         allComments = local.getAllComments();
         allUsers = local.getAllUsers();
+        getCommentsFromRemote(() -> {
+        });
+        getPostsFromRemote(() -> {
+        });
+        getUsersFromRemote(() -> {
+        });
         allPosts.observeForever(posts -> postsLoadingState.setValue(PostLoadingState.loaded));
         allComments.observeForever(comments -> commentsLoadingState.setValue(CommentLoadingState.loaded));
         allUsers.observeForever(users -> usersLoadingState.setValue(UserLoadingState.loaded));
     }
 
+
+    public void getUserByEmail(String email, GetUserListener actionComplete) {
+        MyModelFirebase.getUserByEmail(email, actionComplete);
+    }
+
+    public void signOutUser() {
+        MyModelFirebase.signOutUser();
+    }
+
+    public void signUpUser(String email, String password, OnAuthenticationResult actionComplete, OnAuthenticationResult onError) {
+        MyModelFirebase.signUpUser(email, password, actionComplete, onError);
+    }
+
+    public void signInUser(String email, String password, OnAuthenticationResult actionComplete, OnAuthenticationResult onError) {
+        MyModelFirebase.signInUser(email, password, actionComplete, onError);
+    }
+
     public void insertPost(Message m, String username, GetPostListener actionComplete) {
         postsLoadingState.setValue(PostLoadingState.loading);
-        executor.execute(() ->
-                local.insertPost(m, username, post ->  MyApplication.mainHandler.post(()-> actionComplete.onComplete(post))));
+        MyModelFirebase.insertPost(m, username, post ->
+                getPostsFromRemote(() -> actionComplete.onComplete(post)));
+    }
+
+    public void insertUser(String username, String email, GetUserListener actionComplete) {
+        usersLoadingState.setValue(UserLoadingState.loading);
+        MyModelFirebase.insertUser(username, email, user ->
+                getUsersFromRemote(() -> actionComplete.onComplete(user)));
+
     }
 
     public void editPost(Post p, OnDBActionComplete actionComplete) {
         postsLoadingState.setValue(PostLoadingState.loading);
-        executor.execute(() -> {
-            local.editPost(p);
-            MyApplication.mainHandler.post(actionComplete::onComplete);
-        });
-
+        MyModelFirebase.editPost(p, () -> getPostsFromRemote(actionComplete));
     }
 
     public void deletePost(Post p, OnDBActionComplete actionComplete) {
         postsLoadingState.setValue(PostLoadingState.loading);
-        executor.execute(() -> {
-            local.deletePost(p);
-            MyApplication.mainHandler.post(actionComplete::onComplete);
-        });
+        MyModelFirebase.deletePost(p, () -> getPostsFromRemote(actionComplete));
+    }
+
+    public void deleteUser(User u, OnDBActionComplete actionComplete) {
+        commentsLoadingState.setValue(CommentLoadingState.loading);
+        MyModelFirebase.deleteUser(u, () -> getUsersFromRemote(actionComplete));
     }
 
     public void deleteComment(Comment c, OnDBActionComplete actionComplete) {
         commentsLoadingState.setValue(CommentLoadingState.loading);
-        executor.execute(() -> {
-            local.deleteComment(c);
-            MyApplication.mainHandler.post(actionComplete::onComplete);
-        });
+        MyModelFirebase.deleteComment(c, () -> getCommentsFromRemote(actionComplete));
     }
 
     public void editComment(Comment c, OnDBActionComplete actionComplete) {
         commentsLoadingState.setValue(CommentLoadingState.loading);
-        executor.execute(() -> {
-            local.editComment(c);
-            MyApplication.mainHandler.post(actionComplete::onComplete);
-        });
+        MyModelFirebase.editComment(c, () -> getCommentsFromRemote(actionComplete));
     }
 
     public void insertComment(Message m, String username, String postID, String parentCommentID, GetCommentListener actionComplete) {
         commentsLoadingState.setValue(CommentLoadingState.loading);
-        executor.execute(() ->
-                local.insertComment(m, username, postID, parentCommentID, comment ->
-                MyApplication.mainHandler.post(()-> actionComplete.onComplete(comment))));
+        MyModelFirebase.insertComment(m, username, postID, parentCommentID, comment ->
+                getCommentsFromRemote(() -> actionComplete.onComplete(comment)));
     }
 
     public void getPostByID(String postID, GetPostListener listener) {//
-        executor.execute(() -> {
+        getPostsFromRemote(() -> executor.execute(() -> {
             Post p = local.getPostByID(postID);
             MyApplication.mainHandler.post(() -> listener.onComplete(p));
-        });
+        }));
 
-    }
-
-    public void incrementPostID() {
-        int x = Integer.parseInt(NEXT_POST_ID) + 1;
-        NEXT_POST_ID = Integer.toString(x);
-    }
-
-    public void incrementCommentID() {
-        int x = Integer.parseInt(NEXT_COMMENT_ID) + 1;
-        NEXT_POST_ID = Integer.toString(x);
     }
 
     public void getCommentsOfPost(String postID, OnCommentsCompleteListener actionComplete) {
-        executor.execute(() -> {
-          List<Comment> result =  local.getCommentsOfPost(postID);
+        getCommentsFromRemote(() -> executor.execute(() -> {
+            List<Comment> result = local.getCommentsOfPost(postID);
             MyApplication.mainHandler.post(() -> actionComplete.onComplete(result));
-        });
+        }));
     }
 
     public void getCommentsOfComment(String parentCommentID, OnCommentsCompleteListener actionComplete) {
 
-        executor.execute(() -> {
-            List<Comment> result =  local.getCommentsOfComment(parentCommentID);
+        getCommentsFromRemote(() -> executor.execute(() -> {
+            List<Comment> result = local.getCommentsOfComment(parentCommentID);
             MyApplication.mainHandler.post(() -> actionComplete.onComplete(result));
-        });
+        }));
     }
 
     public void getCommentsOfUser(String username, OnCommentsCompleteListener actionComplete) {
-        executor.execute(() -> {
-            List<Comment> result =  local.getCommentsOfUser(username);
+        getCommentsFromRemote(() -> executor.execute(() -> {
+            List<Comment> result = local.getCommentsOfUser(username);
             MyApplication.mainHandler.post(() -> actionComplete.onComplete(result));
-        });
+        }));
     }
 
     public LiveData<List<Post>> getAllPosts() {
-
+        getCommentsFromRemote(() -> {
+        });
         return allPosts;
     }
 
     public void getPostsOfUser(String username, OnPostsCompleteListener actionComplete) {
-        executor.execute(() -> {
-            List<Post> result =  local.getPostsOfUser(username);
+        getPostsFromRemote(() -> executor.execute(() -> {
+            List<Post> result = local.getPostsOfUser(username);
             MyApplication.mainHandler.post(() -> actionComplete.onComplete(result));
-        });
+        }));
     }
 
     public void getUserByID(String username, GetUserListener listener) {
-        executor.execute(() -> {
+        getUsersFromRemote(() -> executor.execute(() -> {
             User u = local.getByUserName(username);
             MyApplication.mainHandler.post(() -> listener.onComplete(u));
-        });
+        }));
     }
 
     public void getCommentByID(String commentID, GetCommentListener listener) {
-        executor.execute(() -> {
+        getCommentsFromRemote(() -> executor.execute(() -> {
             Comment c = local.getCommentByID(commentID);
             MyApplication.mainHandler.post(() -> listener.onComplete(c));
-        });
+        }));
+
+    }
+
+    public void uploadImage(Bitmap imageBmp, String name, final UploadImageListener listener) {
+        MyModelFirebase.uploadImage(imageBmp, name, listener);
+    }
+
+    public void editUser(User user, String newPhoto, OnDBActionComplete actionComplete) {
+        usersLoadingState.setValue(UserLoadingState.loading);
+        MyModelFirebase.editUser(user, newPhoto, () ->
+                getUsersFromRemote(actionComplete)
+        );
+    }
+
+    public void getPostsFromRemote(OnDBActionComplete actionComplete) {
+        Long localLastUpdate = Post.getLocalLastUpdateTime();
+        MyModelFirebase.getAllPosts(localLastUpdate, posts ->
+                executor.execute(() -> {
+                    Long lastUpdate = 0L;
+                    for (Post p : posts) {
+                        if (p.isDeleted()) {
+                            local.deletePost(p);
+                        } else {
+                            local.savePost(p);
+                        }
+                        if (lastUpdate < p.getLastUpdated())
+                            lastUpdate = p.getLastUpdated();
+                    }
+                    Post.setLocalLastUpdateTime(lastUpdate);
+                    MyApplication.mainHandler.post(() -> {
+                        actionComplete.onComplete();
+                        postsLoadingState.setValue(PostLoadingState.loaded);
+                    });
+                }));
+    }
+
+    public void getUsersFromRemote(OnDBActionComplete actionComplete) {
+        Long localLastUpdate = User.getLocalLastUpdateTime();
+        MyModelFirebase.getAllUsers(localLastUpdate, users ->
+                executor.execute(() -> {
+                    Long lastUpdate = 0L;
+                    for (User user : users) {
+                        if (user.isDeleted()) {
+                            local.deleteUser(user);
+                        } else {
+                            local.saveUser(user);
+                        }
+
+
+                        if (lastUpdate < user.getLastUpdated())
+                            lastUpdate = user.getLastUpdated();
+                    }
+                    User.setLocalLastUpdateTime(lastUpdate);
+                    MyApplication.mainHandler.post(() -> {
+                        actionComplete.onComplete();
+                        usersLoadingState.setValue(UserLoadingState.loaded);
+                    });
+                }));
+    }
+
+    public void getCommentsFromRemote(OnDBActionComplete actionComplete) {
+        Long localLastUpdate = Comment.getLocalLastUpdateTime();
+        MyModelFirebase.getAllComments(localLastUpdate, comments ->
+                executor.execute(() -> {
+                    Long lastUpdate = 0L;
+                    for (Comment comment : comments) {
+                        if (comment.isDeleted()) {
+                            local.deleteComment(comment);
+                        } else {
+                            local.saveComment(comment);
+                        }
+                        if (lastUpdate < comment.getLastUpdated())
+                            lastUpdate = comment.getLastUpdated();
+                    }
+                    Comment.setLocalLastUpdateTime(lastUpdate);
+                    MyApplication.mainHandler.post(() -> {
+                        actionComplete.onComplete();
+                        commentsLoadingState.setValue(CommentLoadingState.loaded);
+                    });
+
+                }));
     }
 
     public enum UserLoadingState {
@@ -178,11 +270,5 @@ public class MyModel {
     public enum CommentLoadingState {
         loading,
         loaded
-    }
-    public  void uploadImage(Bitmap imageBmp, String name, final UploadImageListener listener){
-        MyModelFirebase.uploadImage(imageBmp,name,listener);
-    }
-    public  void editUser(User user, String newPhoto, OnDBActionComplete actionComplete){
-        //TODO: implement
     }
 }

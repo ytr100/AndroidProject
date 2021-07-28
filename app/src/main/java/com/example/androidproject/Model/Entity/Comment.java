@@ -1,9 +1,16 @@
 package com.example.androidproject.Model.Entity;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+
 import androidx.annotation.NonNull;
 import androidx.room.Embedded;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
+
+import com.example.androidproject.MyApplication;
+import com.google.firebase.Timestamp;
+import com.google.firebase.firestore.FieldValue;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -43,28 +50,35 @@ public class Comment implements Holdable {
         this.isDeleted = false;
         this.postID = postID;
     }
+
+    public Long getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(Long lastUpdated) {
+        this.lastUpdated = lastUpdated;
+    }
+
     public static Comment fromJson(Map<String, Object> json) {
         Comment c = new Comment();
        c.setCommentMessage((Message) json.get(MESSAGE));
        c.setCommentID((String)json.get(COMMENT_ID));
        c.setDeleted((boolean) json.get(IS_DELETED));
        c.setPostID((String)json.get(POST_ID));
-       if(json.get(PARENT_COMMENT_ID) == null)
-            c.setParentCommentID(null);
-       else c.setParentCommentID((String)json.get(PARENT_COMMENT_ID));
+       c.setParentCommentID((String)json.get(PARENT_COMMENT_ID));
        c.setCommentUsername((String)json.get(USERNAME));
 
-//        Timestamp ts = (Timestamp) json.get(LAST_UPDATED);
-//        if (ts != null)
-//            post.setLastUpdated(ts.getSeconds());
-//        else
-//            post.setLastUpdated(0L);
+        Timestamp ts = (Timestamp) json.get(LAST_UPDATED);
+        if (ts != null)
+            c.setLastUpdated(ts.getSeconds());
+        else
+            c.setLastUpdated(0L);
         return c;
     }
     public Map<String, Object> toJsonWithoutID() {
         Map<String, Object> json = new HashMap<>();
         json.put(USERNAME, commentUsername);
-        //json.put(LAST_UPDATED, FieldValue.serverTimestamp());
+        json.put(LAST_UPDATED, FieldValue.serverTimestamp());
         json.put(IS_DELETED, isDeleted);
         json.put(MESSAGE,commentMessage);
         json.put(PARENT_COMMENT_ID,parentCommentID);
@@ -153,5 +167,16 @@ public class Comment implements Holdable {
     @Override
     public String getPhoto() {
         return getCommentMessage().getPhoto();
+    }
+    private static final String COMMENT_LAST_UPDATE_DATE = "commentLastUpdate";
+
+    static public void setLocalLastUpdateTime(Long ts){
+        SharedPreferences.Editor editor = MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
+        editor.putLong(COMMENT_LAST_UPDATE_DATE,ts);
+        editor.commit();
+    }
+    static public Long getLocalLastUpdateTime(){
+        return MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE)
+                .getLong(COMMENT_LAST_UPDATE_DATE,0);
     }
 }
