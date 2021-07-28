@@ -8,7 +8,6 @@ import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 
 import com.example.androidproject.Model.Entity.Comment;
-import com.example.androidproject.Model.Entity.User;
 
 import java.util.List;
 
@@ -24,7 +23,7 @@ public interface CommentDao {
     @Delete
     void delete(Comment comment);
 
-    @Query("select * from Comment where postID = :postID")
+    @Query("select * from Comment where postID = :postID AND parentCommentID is null")
     List<Comment> getCommentsOfPost(String postID);
 
     @Query("select * from Comment where parentCommentID = :parentCommentID")

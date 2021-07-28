@@ -16,6 +16,7 @@ public interface PostDao {
 
     @Query("select * from Post")
     LiveData<List<Post>> getAllPosts();
+
     @Query("select * from Post where postUsername = :username")
     List<Post> getPostsFromUser(String username);
 

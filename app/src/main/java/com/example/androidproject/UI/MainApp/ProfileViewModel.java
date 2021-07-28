@@ -8,18 +8,22 @@ import com.example.androidproject.Model.Listeners.GetUserListener;
 import com.example.androidproject.Model.Listeners.OnDBActionComplete;
 
 public class ProfileViewModel extends ViewModel {
-    public ProfileViewModel(){
+    public ProfileViewModel() {
     }
-    public void getUser(String username, GetUserListener listener){
+
+    public void getUser(String username, GetUserListener listener) {
         MyModel.instance.getUserByID(username, listener);
     }
-    public void editUser(User u, String newPhoto, OnDBActionComplete actionComplete){
-        MyModel.instance.editUser(u,newPhoto, actionComplete);
+
+    public void editUser(User u, String newPhoto, OnDBActionComplete actionComplete) {
+        MyModel.instance.editUser(u, newPhoto, actionComplete);
     }
-    public void deleteUser(User u,OnDBActionComplete actionComplete){
-        MyModel.instance.deleteUser(u,actionComplete);
+
+    public void deleteUser(User u, OnDBActionComplete actionComplete) {
+        MyModel.instance.deleteUser(u, actionComplete);
     }
-    public User getCurrentUser(){
+
+    public User getCurrentUser() {
         return MyModel.CURRENT_USER;
     }
 }

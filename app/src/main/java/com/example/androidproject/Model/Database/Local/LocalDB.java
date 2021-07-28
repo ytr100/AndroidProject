@@ -12,7 +12,7 @@ import com.example.androidproject.Model.Entity.Post;
 import com.example.androidproject.Model.Entity.User;
 import com.example.androidproject.MyApplication;
 
-@Database(entities = {User.class, Post.class, Comment.class}, version = 1)
+@Database(entities = {User.class, Post.class, Comment.class}, version = 7)
 abstract class LocalDbRepository extends RoomDatabase {
     public abstract UserDao userDao();
 

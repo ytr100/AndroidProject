@@ -13,25 +13,31 @@ import com.example.androidproject.Model.Listeners.OnDBActionComplete;
 
 public class EditViewModel extends ViewModel {
 
-    public void insertPost(Message m, String username, GetPostListener actionComplete){
-        MyModel.instance.insertPost(m,username,actionComplete);
+    public void insertPost(Message m, String username, GetPostListener actionComplete) {
+        MyModel.instance.insertPost(m, username, actionComplete);
     }
-    public void editPost(Post p, OnDBActionComplete actionComplete){
-        MyModel.instance.editPost(p,actionComplete);
+
+    public void editPost(Post p, OnDBActionComplete actionComplete) {
+        MyModel.instance.editPost(p, actionComplete);
     }
-    public void insertComment(Message m, String username, String postID, String parentCommentID, GetCommentListener actionComplete){
-        MyModel.instance.insertComment(m,username,postID,parentCommentID,actionComplete);
+
+    public void insertComment(Message m, String username, String postID, String parentCommentID, GetCommentListener actionComplete) {
+        MyModel.instance.insertComment(m, username, postID, parentCommentID, actionComplete);
     }
-    public void editComment(Comment c, OnDBActionComplete actionComplete){
+
+    public void editComment(Comment c, OnDBActionComplete actionComplete) {
         MyModel.instance.editComment(c, actionComplete);
     }
-    public void getCurrentUser(GetUserListener listener){
+
+    public void getCurrentUser(GetUserListener listener) {
         listener.onComplete(MyModel.CURRENT_USER);
     }
-    public void getPost(String postID, GetPostListener listener){
-         MyModel.instance.getPostByID(postID,listener);
+
+    public void getPost(String postID, GetPostListener listener) {
+        MyModel.instance.getPostByID(postID, listener);
     }
-    public void getComment(String commentID, GetCommentListener listener){
-        MyModel.instance.getCommentByID(commentID,listener);
+
+    public void getComment(String commentID, GetCommentListener listener) {
+        MyModel.instance.getCommentByID(commentID, listener);
     }
 }

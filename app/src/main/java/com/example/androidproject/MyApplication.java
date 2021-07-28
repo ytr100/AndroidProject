@@ -9,9 +9,8 @@ import androidx.core.os.HandlerCompat;
 
 public class MyApplication extends Application {
 
-    static public Context context;
     static public final Handler mainHandler = HandlerCompat.createAsync(Looper.getMainLooper());
-
+    static public Context context;
 
     @Override
     public void onCreate() {

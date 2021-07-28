@@ -2,20 +2,13 @@ package com.example.androidproject.Model.Database.Local;
 
 import androidx.lifecycle.LiveData;
 
-
-import com.example.androidproject.Model.Database.MyModel;
 import com.example.androidproject.Model.Entity.Comment;
-import com.example.androidproject.Model.Entity.Message;
 import com.example.androidproject.Model.Entity.Post;
 import com.example.androidproject.Model.Entity.User;
-import com.example.androidproject.Model.Listeners.GetCommentListener;
-import com.example.androidproject.Model.Listeners.GetPostListener;
-import com.example.androidproject.Model.Listeners.OnDBActionComplete;
 
 import java.util.List;
 
-public class LocalDataBase  {//every method except LiveData must be called from a background thread
-
+public class LocalDataBase {//every method except LiveData must be called from a background thread
 
 
     public void savePost(Post p) {
@@ -28,10 +21,12 @@ public class LocalDataBase  {//every method except LiveData must be called from 
         LocalDB.db.postDao().delete(p);
 
     }
-    public void saveUser(User u){
+
+    public void saveUser(User u) {
         LocalDB.db.userDao().insertAllUsers(u);
     }
-    public void deleteUser(User u){
+
+    public void deleteUser(User u) {
         LocalDB.db.userDao().delete(u);
     }
 
@@ -92,7 +87,7 @@ public class LocalDataBase  {//every method except LiveData must be called from 
 
 
     public LiveData<List<Comment>> getAllComments() {
-       return LocalDB.db.commentDao().getAllComments();
+        return LocalDB.db.commentDao().getAllComments();
     }
 
 

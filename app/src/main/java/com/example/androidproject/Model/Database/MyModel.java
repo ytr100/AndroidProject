@@ -1,6 +1,7 @@
 package com.example.androidproject.Model.Database;
 
 import android.graphics.Bitmap;
+import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -40,22 +41,17 @@ public class MyModel {
     public MutableLiveData<CommentLoadingState> commentsLoadingState;
 
     private MyModel() {
-        usersLoadingState = new MutableLiveData<>(UserLoadingState.loading);
-        postsLoadingState = new MutableLiveData<>(PostLoadingState.loading);
-        commentsLoadingState = new MutableLiveData<>(CommentLoadingState.loading);
+        usersLoadingState = new MutableLiveData<>(UserLoadingState.loaded);
+        postsLoadingState = new MutableLiveData<>(PostLoadingState.loaded);
+        commentsLoadingState = new MutableLiveData<>(CommentLoadingState.loaded);
+        commentsLoadingState.observeForever(comments ->
+                Log.d("TAG3", "changed to: " + commentsLoadingState.getValue()));
         local = new LocalDataBase();
         allPosts = local.getAllPosts();
         allComments = local.getAllComments();
         allUsers = local.getAllUsers();
-        getCommentsFromRemote(() -> {
-        });
-        getPostsFromRemote(() -> {
-        });
-        getUsersFromRemote(() -> {
-        });
-        allPosts.observeForever(posts -> postsLoadingState.setValue(PostLoadingState.loaded));
-        allComments.observeForever(comments -> commentsLoadingState.setValue(CommentLoadingState.loaded));
-        allUsers.observeForever(users -> usersLoadingState.setValue(UserLoadingState.loaded));
+
+
     }
 
 
@@ -67,8 +63,9 @@ public class MyModel {
         MyModelFirebase.signOutUser();
     }
 
-    public void signUpUser(String email, String password, OnAuthenticationResult actionComplete, OnAuthenticationResult onError) {
-        MyModelFirebase.signUpUser(email, password, actionComplete, onError);
+    public void signUpUser(String username, String email, String password, OnAuthenticationResult actionComplete, OnAuthenticationResult onError) {
+
+        MyModelFirebase.signUpUser(username, email, password, actionComplete, onError);
     }
 
     public void signInUser(String email, String password, OnAuthenticationResult actionComplete, OnAuthenticationResult onError) {
@@ -120,61 +117,72 @@ public class MyModel {
     }
 
     public void getPostByID(String postID, GetPostListener listener) {//
-        getPostsFromRemote(() -> executor.execute(() -> {
+        //getPostsFromRemote(() -> {});
+        executor.execute(() -> {
             Post p = local.getPostByID(postID);
             MyApplication.mainHandler.post(() -> listener.onComplete(p));
-        }));
+        });
 
     }
 
     public void getCommentsOfPost(String postID, OnCommentsCompleteListener actionComplete) {
-        getCommentsFromRemote(() -> executor.execute(() -> {
+        executor.execute(() -> {
             List<Comment> result = local.getCommentsOfPost(postID);
             MyApplication.mainHandler.post(() -> actionComplete.onComplete(result));
-        }));
+        });
     }
 
     public void getCommentsOfComment(String parentCommentID, OnCommentsCompleteListener actionComplete) {
-
-        getCommentsFromRemote(() -> executor.execute(() -> {
+        executor.execute(() -> {
             List<Comment> result = local.getCommentsOfComment(parentCommentID);
             MyApplication.mainHandler.post(() -> actionComplete.onComplete(result));
-        }));
+        });
     }
 
     public void getCommentsOfUser(String username, OnCommentsCompleteListener actionComplete) {
-        getCommentsFromRemote(() -> executor.execute(() -> {
+        executor.execute(() -> {
             List<Comment> result = local.getCommentsOfUser(username);
             MyApplication.mainHandler.post(() -> actionComplete.onComplete(result));
-        }));
+        });
     }
 
     public LiveData<List<Post>> getAllPosts() {
-        getCommentsFromRemote(() -> {
+        getPostsFromRemote(() -> {
         });
         return allPosts;
     }
 
+    public LiveData<List<User>> getAllUsers() {
+        getUsersFromRemote(() -> {
+        });
+        return allUsers;
+    }
+
+    public LiveData<List<Comment>> getAllComments() {
+        getCommentsFromRemote(() -> {
+        });
+        return allComments;
+    }
+
     public void getPostsOfUser(String username, OnPostsCompleteListener actionComplete) {
-        getPostsFromRemote(() -> executor.execute(() -> {
+        executor.execute(() -> {
             List<Post> result = local.getPostsOfUser(username);
             MyApplication.mainHandler.post(() -> actionComplete.onComplete(result));
-        }));
+        });
     }
 
     public void getUserByID(String username, GetUserListener listener) {
-        getUsersFromRemote(() -> executor.execute(() -> {
+        executor.execute(() -> {
             User u = local.getByUserName(username);
             MyApplication.mainHandler.post(() -> listener.onComplete(u));
-        }));
+        });
     }
 
     public void getCommentByID(String commentID, GetCommentListener listener) {
-        getCommentsFromRemote(() -> executor.execute(() -> {
+        executor.execute(() -> {
             Comment c = local.getCommentByID(commentID);
             MyApplication.mainHandler.post(() -> listener.onComplete(c));
-        }));
-
+        });
     }
 
     public void uploadImage(Bitmap imageBmp, String name, final UploadImageListener listener) {
@@ -189,6 +197,7 @@ public class MyModel {
     }
 
     public void getPostsFromRemote(OnDBActionComplete actionComplete) {
+        postsLoadingState.setValue(PostLoadingState.loading);
         Long localLastUpdate = Post.getLocalLastUpdateTime();
         MyModelFirebase.getAllPosts(localLastUpdate, posts ->
                 executor.execute(() -> {
@@ -202,6 +211,11 @@ public class MyModel {
                         if (lastUpdate < p.getLastUpdated())
                             lastUpdate = p.getLastUpdated();
                     }
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     Post.setLocalLastUpdateTime(lastUpdate);
                     MyApplication.mainHandler.post(() -> {
                         actionComplete.onComplete();
@@ -211,6 +225,7 @@ public class MyModel {
     }
 
     public void getUsersFromRemote(OnDBActionComplete actionComplete) {
+        usersLoadingState.setValue(UserLoadingState.loading);
         Long localLastUpdate = User.getLocalLastUpdateTime();
         MyModelFirebase.getAllUsers(localLastUpdate, users ->
                 executor.execute(() -> {
@@ -226,6 +241,11 @@ public class MyModel {
                         if (lastUpdate < user.getLastUpdated())
                             lastUpdate = user.getLastUpdated();
                     }
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     User.setLocalLastUpdateTime(lastUpdate);
                     MyApplication.mainHandler.post(() -> {
                         actionComplete.onComplete();
@@ -235,6 +255,7 @@ public class MyModel {
     }
 
     public void getCommentsFromRemote(OnDBActionComplete actionComplete) {
+        commentsLoadingState.setValue(CommentLoadingState.loading);
         Long localLastUpdate = Comment.getLocalLastUpdateTime();
         MyModelFirebase.getAllComments(localLastUpdate, comments ->
                 executor.execute(() -> {
@@ -247,6 +268,11 @@ public class MyModel {
                         }
                         if (lastUpdate < comment.getLastUpdated())
                             lastUpdate = comment.getLastUpdated();
+                    }
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
                     Comment.setLocalLastUpdateTime(lastUpdate);
                     MyApplication.mainHandler.post(() -> {

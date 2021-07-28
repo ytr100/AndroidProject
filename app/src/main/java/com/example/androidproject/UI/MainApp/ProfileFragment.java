@@ -36,6 +36,9 @@ public class ProfileFragment extends Fragment {
     private String username;
     private Bitmap imageBitmap;
     private ImageView photo;
+    private ImageButton takePic;
+    private ProgressBar progressBar;
+    private TextView deleted;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -47,32 +50,21 @@ public class ProfileFragment extends Fragment {
         username = ProfileFragmentArgs.fromBundle(getArguments()).getUsername();
         TextView userText = root.findViewById(R.id.profile_username);
         TextView email = root.findViewById(R.id.profile_email);
+        deleted = root.findViewById(R.id.profile_delete_message);
+        deleted.setVisibility(View.GONE);
         photo = root.findViewById(R.id.profile_photo);
-        ImageButton takePic = root.findViewById(R.id.profile_picture_btn);
-        ProgressBar progressBar = root.findViewById(R.id.profile_progressBar);
+        takePic = root.findViewById(R.id.profile_picture_btn);
+        progressBar = root.findViewById(R.id.profile_progressBar);
         ImageButton deleteBtn = root.findViewById(R.id.profile_delete);
 
         if (username.equals(MyModel.CURRENT_USER.getUsername())) {
             User user = profileViewModel.getCurrentUser();
-            takePic.setOnClickListener(v -> {
-                dispatchTakePictureIntent();
-                if (imageBitmap != null) {
-                    takePic.setEnabled(false);
-                    progressBar.setVisibility(View.VISIBLE);
-                    MyModel.instance.uploadImage(imageBitmap, username, url -> profileViewModel.editUser(user, url, () -> {
-                                takePic.setEnabled(true);
-                                progressBar.setVisibility(View.GONE);
-                                if (user.getPhoto() != null && !user.getPhoto().equals("")) {
-                                    Picasso.get().load(user.getPhoto()).placeholder(R.drawable.ic_launcher_background).error(R.drawable.ic_launcher_background).into(photo);
-                                }
-                            }
-                    ));
-                }
-            });
+            takePic.setOnClickListener(v -> dispatchTakePictureIntent());
             deleteBtn.setOnClickListener(v -> {
                 AlertDialog.Builder builder = new AlertDialog.Builder(root.getContext());
                 DialogInterface.OnClickListener listener = (dialog, which) -> {
                     if (which == DialogInterface.BUTTON_POSITIVE) {
+                        progressBar.setVisibility(View.VISIBLE);
                         profileViewModel.deleteUser(user, () -> {
                             progressBar.setVisibility(View.GONE);
                             getActivity().finish();
@@ -90,12 +82,22 @@ public class ProfileFragment extends Fragment {
         }
         progressBar.setVisibility(View.VISIBLE);
         profileViewModel.getUser(username, user -> {
-            userText.setText(user.getUsername());
-            email.setText(user.getEmail());
-
-            photo.setImageResource(R.drawable.ic_launcher_background);
-            if (user.getPhoto() != null && !user.getPhoto().equals("")) {
-                Picasso.get().load(user.getPhoto()).placeholder(R.drawable.ic_launcher_background).error(R.drawable.ic_launcher_background).into(photo);
+            if (user == null) {//user was deleted
+                deleted.setVisibility(View.VISIBLE);
+                userText.setVisibility(View.GONE);
+                photo.setVisibility(View.GONE);
+                email.setVisibility(View.GONE);
+                TextView tv1 = root.findViewById(R.id.textView2);
+                TextView tv2 = root.findViewById(R.id.textView3);
+                tv1.setVisibility(View.GONE);
+                tv2.setVisibility(View.GONE);
+            } else {
+                photo.setImageResource(R.drawable.ic_launcher_background);
+                userText.setText(user.getUsername());
+                email.setText(user.getEmail());
+                if (user.getPhoto() != null && !user.getPhoto().equals("")) {
+                    Picasso.get().load(user.getPhoto()).placeholder(R.drawable.ic_launcher_background).error(R.drawable.ic_launcher_background).into(photo);
+                }
             }
             progressBar.setVisibility(View.GONE);
         });
@@ -140,6 +142,19 @@ public class ProfileFragment extends Fragment {
             Bundle extras = data.getExtras();
             imageBitmap = (Bitmap) extras.get("data");
             photo.setImageBitmap(imageBitmap);
+        }
+        if (imageBitmap != null) {
+            User user = profileViewModel.getCurrentUser();
+            takePic.setEnabled(false);
+            progressBar.setVisibility(View.VISIBLE);
+            MyModel.instance.uploadImage(imageBitmap, username, url -> profileViewModel.editUser(user, url, () -> {
+                        takePic.setEnabled(true);
+                        progressBar.setVisibility(View.GONE);
+                        if (user.getPhoto() != null && !user.getPhoto().equals("")) {
+                            Picasso.get().load(user.getPhoto()).placeholder(R.drawable.ic_launcher_background).error(R.drawable.ic_launcher_background).into(photo);
+                        }
+                    }
+            ));
         }
     }
 

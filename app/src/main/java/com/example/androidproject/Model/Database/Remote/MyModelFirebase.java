@@ -27,6 +27,7 @@ import com.google.firebase.storage.UploadTask;
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class MyModelFirebase {
     final static String postCollection = "posts";
@@ -71,21 +72,56 @@ public class MyModelFirebase {
         auth.signOut();
     }
 
-    public static void signUpUser(String email, String password, OnAuthenticationResult onComplete, OnAuthenticationResult onError) {
+    public static void signUpUser(String username, String email, String password, OnAuthenticationResult onComplete, OnAuthenticationResult onError) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        auth.createUserWithEmailAndPassword(email, password)
-                .addOnFailureListener(e -> {
-                    onError.execute(email);
-                    Log.d("TAG", e.getMessage());
-                })
-                .addOnSuccessListener(authResult -> onComplete.execute(email));
+        db.collection(userCollection)
+                .whereEqualTo(User.USERNAME, username)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful())
+                        if (task.getResult().size() > 0)
+                            onError.execute(email);
+                        else {
+                            auth.createUserWithEmailAndPassword(email, password)
+                                    .addOnFailureListener(e -> {
+                                        onError.execute(email);
+                                        Log.d("TAG", e.getMessage());
+                                    })
+                                    .addOnSuccessListener(authResult -> onComplete.execute(email));
+                        }
+                    else {
+                        Log.d("ERROR", "Task is unsuccessful : check username");
+                        onError.execute(email);
+                    }
+
+                });
+
     }
 
     public static void signInUser(String email, String password, OnAuthenticationResult onComplete, OnAuthenticationResult onError) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        auth.signInWithEmailAndPassword(email, password)
-                .addOnFailureListener(e -> onError.execute(email))
-                .addOnSuccessListener(authResult -> onComplete.execute(email));
+        db.collection(userCollection)
+                .whereEqualTo(User.EMAIL, email)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful())
+                        if (task.getResult().size() > 0)
+                            if (User.fromJson(task.getResult().getDocuments().get(0).getData()).isDeleted())
+                                onError.execute(email);
+                            else {
+                                auth.signInWithEmailAndPassword(email, password)
+                                        .addOnFailureListener(e -> onError.execute(email))
+                                        .addOnSuccessListener(authResult -> onComplete.execute(email));
+                            }
+                        else {
+                            Log.d("ERROR", "Task is unsuccessful : get email");
+                            onError.execute(email);
+                        }
+
+                });
+
     }
 
     public static void insertComment(Message m, String username, String postID, String parentCommentID, GetCommentListener actionComplete) {
@@ -120,7 +156,7 @@ public class MyModelFirebase {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 // Updates the given document
         db.collection(commentCollection)
-                .document(c.getPostID()).update(c.toJsonWithoutID())
+                .document(c.getCommentID()).update(c.toJsonWithoutID())
                 .addOnSuccessListener(voidValue -> actionComplete.onComplete())
                 .addOnFailureListener(e -> Log.w("TAG", "Error updating document", e));
     }
@@ -140,7 +176,9 @@ public class MyModelFirebase {
                     if (task.isSuccessful()) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             Log.d("TAG", document.getId() + " => " + document.getData());
-                            postList.add(Post.fromJson(document.getData()));
+                            Map<String, Object> json = document.getData();
+                            json.put(Post.ID, document.getId());
+                            postList.add(Post.fromJson(json));
                         }
                     } else {
                         Log.w("TAG", "Error getting documents. (getAllPosts)", task.getException());
@@ -159,7 +197,9 @@ public class MyModelFirebase {
                     if (task.isSuccessful()) {
                         for (QueryDocumentSnapshot document : task.getResult()) {
                             Log.d("TAG", document.getId() + " => " + document.getData());
-                            commentList.add(Comment.fromJson(document.getData()));
+                            Map<String, Object> json = document.getData();
+                            json.put(Comment.COMMENT_ID, document.getId());
+                            commentList.add(Comment.fromJson(json));
                         }
                     } else {
                         Log.w("TAG", "Error getting documents. (getAllPosts)", task.getException());
@@ -170,7 +210,7 @@ public class MyModelFirebase {
 
     public static void insertUser(String username, String email, GetUserListener actionComplete) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
-        User user = new User(username,email);
+        User user = new User(username, email);
 // Add a new document with a generated ID
         db.collection(userCollection)
                 .document(user.getUsername())

@@ -25,6 +25,7 @@ import androidx.navigation.Navigation;
 import com.example.androidproject.Model.Database.MyModel;
 import com.example.androidproject.Model.Entity.Message;
 import com.example.androidproject.R;
+import com.squareup.picasso.Picasso;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -40,23 +41,6 @@ public class EditFragment extends Fragment {
     private ImageView photo;
     private EditText title;
     private EditText content;
-
-//    private void initLoadingState(ProgressBar progressBar) {
-//        if (postID == null || (commentID == null && !isCreate)) {//create or edit post
-//            MyModel.instance.postsLoadingState.observe(getViewLifecycleOwner(), postLoadingState -> {
-//                if (postLoadingState == MyModel.PostLoadingState.loading) {
-//                    progressBar.setVisibility(View.VISIBLE);
-//                }
-//            });
-//        } else {
-//            MyModel.instance.commentsLoadingState.observe(getViewLifecycleOwner(), commentsLoadingState -> {
-//                if (commentsLoadingState == MyModel.CommentLoadingState.loading) {
-//                    progressBar.setVisibility(View.VISIBLE);
-//                }
-//            });
-//        }
-//
-//    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -81,7 +65,7 @@ public class EditFragment extends Fragment {
         isCreate = args.getIsCreate();
         initUI(title, content, progressBar);
 
-        //initLoadingState(progressBar);// TODO: check if needed
+        initLoadingState(progressBar);
 
         save.setOnClickListener(v -> {
             save.setEnabled(false);
@@ -105,6 +89,27 @@ public class EditFragment extends Fragment {
         return root;
     }
 
+    private void initLoadingState(ProgressBar progressBar) {
+        if (postID == null || (commentID == null && !isCreate)) {//create or edit post
+            MyModel.instance.postsLoadingState.observe(getViewLifecycleOwner(), postLoadingState -> {
+                if (postLoadingState == MyModel.PostLoadingState.loading) {
+                    progressBar.setVisibility(View.VISIBLE);
+                } else {
+                    progressBar.setVisibility(View.GONE);
+                }
+            });
+        } else {
+            MyModel.instance.commentsLoadingState.observe(getViewLifecycleOwner(), commentsLoadingState -> {
+                if (commentsLoadingState == MyModel.CommentLoadingState.loading) {
+                    progressBar.setVisibility(View.VISIBLE);
+                } else {
+                    progressBar.setVisibility(View.GONE);
+                }
+            });
+        }
+
+    }
+
     private void createNewPost(View v) {
         editViewModel.getCurrentUser(user ->
                 editViewModel.insertPost(new Message(title.getText().toString(), content.getText().toString(), null), user.getUsername(), post -> {
@@ -113,8 +118,9 @@ public class EditFragment extends Fragment {
                             post.getPostMessage().setPhoto(url);
                             editViewModel.editPost(post, () -> Navigation.findNavController(v).navigateUp());
                         });
+                    } else {
+                        Navigation.findNavController(v).navigateUp();
                     }
-
                 }));
     }
 
@@ -128,6 +134,8 @@ public class EditFragment extends Fragment {
                     post.getPostMessage().setPhoto(url);
                     editViewModel.editPost(post, () -> Navigation.findNavController(v).navigateUp());
                 });
+            } else {
+                editViewModel.editPost(post, () -> Navigation.findNavController(v).navigateUp());
             }
         });
     }
@@ -142,6 +150,8 @@ public class EditFragment extends Fragment {
                     comment.getCommentMessage().setPhoto(url);
                     editViewModel.editComment(comment, () -> Navigation.findNavController(v).navigateUp());
                 });
+            } else {
+                editViewModel.editComment(comment, () -> Navigation.findNavController(v).navigateUp());
             }
         });
     }
@@ -157,22 +167,25 @@ public class EditFragment extends Fragment {
                                             comment.getCommentMessage().setPhoto(url);
                                             editViewModel.editComment(comment, () -> Navigation.findNavController(v).navigateUp());
                                         });
+                                    } else {
+                                        Navigation.findNavController(v).navigateUp();
                                     }
                                 })));
     }
 
     private void createNestedComment(View v) {
         editViewModel.getCurrentUser(user ->
-                editViewModel.getComment(parentCommentID, comment ->
+                editViewModel.getComment(parentCommentID, parent ->
                         editViewModel.insertComment(
                                 new Message(title.getText().toString(), content.getText().toString(), null
-                                ), user.getUsername(), comment.getPostID(), comment.getCommentID(), comment1 -> {
+                                ), user.getUsername(), parent.getPostID(), parent.getCommentID(), child -> {
                                     if (imageBitmap != null) {
-                                        MyModel.instance.uploadImage(imageBitmap, comment.getCommentID(), url -> {
-                                            comment.getCommentMessage().setPhoto(url);
-                                            editViewModel.editComment(comment, () -> Navigation.findNavController(v).navigateUp());
+                                        MyModel.instance.uploadImage(imageBitmap, child.getCommentID(), url -> {
+                                            child.getCommentMessage().setPhoto(url);
+                                            editViewModel.editComment(child, () -> Navigation.findNavController(v).navigateUp());
                                         });
-
+                                    } else {
+                                        Navigation.findNavController(v).navigateUp();
                                     }
                                 })));
     }
@@ -206,15 +219,18 @@ public class EditFragment extends Fragment {
                 editViewModel.getPost(postID, post -> {
                     title.setText(post.getPostMessage().getTitle());
                     content.setText(post.getContent());
-                    progressBar.setVisibility(View.GONE);
+                    //progressBar.setVisibility(View.GONE);
+                    if (post.getPhoto() != null && !post.getPhoto().equals(""))
+                        Picasso.get().load(post.getPhoto()).placeholder(R.drawable.ic_launcher_background).into(photo);
                 });
             } else {//edit comment
                 editViewModel.getComment(commentID, comment -> {
                     title.setText(comment.getCommentMessage().getTitle());
                     content.setText(comment.getContent());
-                    progressBar.setVisibility(View.GONE);
+                    //progressBar.setVisibility(View.GONE);
+                    if (comment.getPhoto() != null && !comment.getPhoto().equals(""))
+                        Picasso.get().load(comment.getPhoto()).placeholder(R.drawable.ic_launcher_background).into(photo);
                 });
-
             }
         }
         ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle(txt);

@@ -16,12 +16,11 @@ public class CommentsViewModel extends ViewModel {
     private List<Comment> queryResult;
 
     public CommentsViewModel() {
-        data = MyModel.instance.allComments;
+        data = MyModel.instance.getAllComments();
         queryResult = new ArrayList<>();
     }
 
     public void getCommentsOfPost(String postID, OnCommentsCompleteListener actionComplete) {
-
         MyModel.instance.getCommentsOfPost(postID, comments -> {
             queryResult = comments;
             actionComplete.onComplete(queryResult);
@@ -50,12 +49,13 @@ public class CommentsViewModel extends ViewModel {
         return data;
     }
 
-    public List<Comment> getCurrent() {
+    public List<Comment> getQuerySnapshot() {
         if (queryResult != null)
             return queryResult;
         return new ArrayList<>();
     }
-    public void refresh(OnDBActionComplete actionComplete){
+
+    public void refresh(OnDBActionComplete actionComplete) {
         MyModel.instance.getCommentsFromRemote(actionComplete);
     }
 }

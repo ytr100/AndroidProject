@@ -29,11 +29,11 @@ import com.example.androidproject.R;
 
 import java.util.List;
 
-//TODO: livedata
 public class PostsFragment extends Fragment {
     PostsViewModel postsViewModel;
     private String username;
     private SwipeRefreshLayout swipeRefreshLayout;
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -44,14 +44,14 @@ public class PostsFragment extends Fragment {
         RecyclerView postsList = root.findViewById(R.id.main_posts_list);
         ProgressBar progressBar = root.findViewById(R.id.main_posts_progressBar);
         progressBar.setVisibility(View.GONE);
-        swipeRefreshLayout = root.findViewById(R.id.main_comments_refresh);
+        swipeRefreshLayout = root.findViewById(R.id.main_posts_refresh);
         postsList.setLayoutManager(new LinearLayoutManager(root.getContext()));
         PostsListAdapter adapter = new PostsListAdapter();
 
         setListeners(adapter, root, progressBar);
         postsList.setAdapter(adapter);
         username = PostsFragmentArgs.fromBundle(getArguments()).getUsername();//only posts from user or all if null
-        initViewModel(adapter,progressBar);
+        initViewModel(adapter, progressBar);
         setHasOptionsMenu(true);
 
         swipeRefreshLayout.setOnRefreshListener(() -> postsViewModel.refresh(() -> {
@@ -59,7 +59,8 @@ public class PostsFragment extends Fragment {
         MyModel.instance.postsLoadingState.observe(getViewLifecycleOwner(), postLoadingState -> {
             if (postLoadingState == MyModel.PostLoadingState.loading) {
                 progressBar.setVisibility(View.VISIBLE);
-            }else{
+            } else {
+                progressBar.setVisibility(View.GONE);
                 swipeRefreshLayout.setRefreshing(false);
             }
         });
@@ -68,7 +69,7 @@ public class PostsFragment extends Fragment {
 
     private void setListeners(PostsListAdapter adapter, View root, ProgressBar progressBar) {
         adapter.setOnListItemClickListener(position -> {
-                    Post p = postsViewModel.getCurrent().get(position);
+                    Post p = postsViewModel.getQuerySnapshot().get(position);
                     NavDirections action = PostsFragmentDirections.actionPostsFragmentToCommentsFragment(p.getPostID(), null);
                     Navigation.findNavController(root).navigate(action);
                 }
@@ -87,9 +88,7 @@ public class PostsFragment extends Fragment {
                     DialogInterface.OnClickListener listener = (dialog, which) -> {
                         if (which == DialogInterface.BUTTON_POSITIVE) {
                             Post p = (Post) holdable;
-                            postsViewModel.deletePost(p, () ->{
-                                progressBar.setVisibility(View.GONE);
-                            swipeRefreshLayout.setRefreshing(false);
+                            postsViewModel.deletePost(p, () -> {
                             });
                         }
                     };
@@ -105,19 +104,11 @@ public class PostsFragment extends Fragment {
     private void initViewModel(PostsListAdapter adapter, ProgressBar progressBar) {
         if (username != null) {//view all posts of user
             postsViewModel.getAllPosts().observe(getViewLifecycleOwner(), posts ->
-                    postsViewModel.getPostsOfUser(username, posts1 -> {
-                        adapter.notifyDataSetChanged();
-                        progressBar.setVisibility(View.GONE);
-                        swipeRefreshLayout.setRefreshing(false);
-                    })
+                    postsViewModel.getPostsOfUser(username, posts1 -> adapter.notifyDataSetChanged())
             );
         }//view all posts
         else postsViewModel.getAllPosts().observe(getViewLifecycleOwner(), posts ->
-                postsViewModel.getPosts(posts1 -> {
-                    adapter.notifyDataSetChanged();
-                    progressBar.setVisibility(View.GONE);
-                    swipeRefreshLayout.setRefreshing(false);
-                }));
+                postsViewModel.getPosts(posts1 -> adapter.notifyDataSetChanged()));
     }
 
     @Override
@@ -157,14 +148,14 @@ public class PostsFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull RowViewHolder holder, int position) {
-            Post p = postsViewModel.getCurrent().get(position);
+            Post p = postsViewModel.getQuerySnapshot().get(position);
             Log.d("TAG", "onBindViewHolder " + position);
             holder.bind(p);
         }
 
         @Override
         public int getItemCount() {
-            List<Post> posts = postsViewModel.getCurrent();
+            List<Post> posts = postsViewModel.getQuerySnapshot();
             if (posts == null) return 0;
             return posts.size();
         }

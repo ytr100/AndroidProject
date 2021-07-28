@@ -44,10 +44,11 @@ public class User {
     public User() {
 
     }
+
     public static User fromJson(Map<String, Object> json) {
         User user = new User();
         user.setEmail((String) json.get(EMAIL));
-        user.setUsername((String)json.get(USERNAME));
+        user.setUsername((String) json.get(USERNAME));
         user.setPhoto((String) json.get(PHOTO));
         Timestamp ts = (Timestamp) json.get(LAST_UPDATED);
         if (ts != null)
@@ -56,6 +57,17 @@ public class User {
             user.setLastUpdated(0L);
         user.setDeleted((boolean) json.get(IS_DELETED));
         return user;
+    }
+
+    static public Long getLocalLastUpdateTime() {
+        return MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE)
+                .getLong(USER_LAST_UPDATE_DATE, 0);
+    }
+
+    static public void setLocalLastUpdateTime(Long ts) {
+        SharedPreferences.Editor editor = MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
+        editor.putLong(USER_LAST_UPDATE_DATE, ts);
+        editor.commit();
     }
 
     @Override
@@ -76,8 +88,8 @@ public class User {
         json.put(USERNAME, username);
         json.put(LAST_UPDATED, FieldValue.serverTimestamp());
         json.put(IS_DELETED, isDeleted);
-        json.put(PHOTO,photo);
-        json.put(EMAIL,email);
+        json.put(PHOTO, photo);
+        json.put(EMAIL, email);
         return json;
     }
 
@@ -120,15 +132,5 @@ public class User {
 
     public void setPhoto(String photo) {
         this.photo = photo;
-    }
-
-    static public void setLocalLastUpdateTime(Long ts){
-        SharedPreferences.Editor editor = MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE).edit();
-        editor.putLong(USER_LAST_UPDATE_DATE,ts);
-        editor.commit();
-    }
-    static public Long getLocalLastUpdateTime(){
-        return MyApplication.context.getSharedPreferences("TAG", Context.MODE_PRIVATE)
-                .getLong(USER_LAST_UPDATE_DATE,0);
     }
 }

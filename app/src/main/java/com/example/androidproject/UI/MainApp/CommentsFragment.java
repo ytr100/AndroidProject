@@ -67,7 +67,8 @@ public class CommentsFragment extends Fragment {
         MyModel.instance.commentsLoadingState.observe(getViewLifecycleOwner(), commentLoadingState -> {
             if (commentLoadingState == MyModel.CommentLoadingState.loading) {
                 progressBar.setVisibility(View.VISIBLE);
-            }else{
+            } else {
+                progressBar.setVisibility(View.GONE);
                 swipeRefreshLayout.setRefreshing(false);
             }
         });
@@ -77,7 +78,7 @@ public class CommentsFragment extends Fragment {
 
     private void setListeners(CommentsListAdapter adapter, View root, ProgressBar progressBar) {
         adapter.setOnListItemClickListener(position -> {
-            Comment c = commentsViewModel.getCurrent().get(position);
+            Comment c = commentsViewModel.getQuerySnapshot().get(position);
             CommentsFragmentDirections.ActionCommentsFragmentSelf action = CommentsFragmentDirections.actionCommentsFragmentSelf(c.getPostID(), c.getCommentID());//c is the parent comment now
             Navigation.findNavController(root).navigate(action);
         });
@@ -93,8 +94,6 @@ public class CommentsFragment extends Fragment {
                         if (which == DialogInterface.BUTTON_POSITIVE) {
                             Comment c = (Comment) holdable;
                             commentsViewModel.deleteComment(c, () -> {
-                                progressBar.setVisibility(View.GONE);
-                                swipeRefreshLayout.setRefreshing(false);
                             });
                         }
                     };
@@ -110,25 +109,16 @@ public class CommentsFragment extends Fragment {
     private void initViewModel(CommentsListAdapter adapter, ProgressBar progressBar) {
         if (username != null) {//view all comments of user
             commentsViewModel.getAllComments().observe(getViewLifecycleOwner(), comments ->
-                    commentsViewModel.getCommentsOfUser(username, comments1 -> {
-                        adapter.notifyDataSetChanged();
-                        progressBar.setVisibility(View.GONE);
-                        swipeRefreshLayout.setRefreshing(false);
-                    }));
+                    commentsViewModel.getCommentsOfUser(username, comments1 ->
+                            adapter.notifyDataSetChanged()));
         } else if (parentCommentID != null) {//nested comment
             commentsViewModel.getAllComments().observe(getViewLifecycleOwner(), comments ->
-                    commentsViewModel.getCommentsOfComment(parentCommentID, comments1 -> {
-                        adapter.notifyDataSetChanged();
-                        progressBar.setVisibility(View.GONE);
-                        swipeRefreshLayout.setRefreshing(false);
-                    }));
+                    commentsViewModel.getCommentsOfComment(parentCommentID, comments1 ->
+                            adapter.notifyDataSetChanged()));
         } else {//regular comment
             commentsViewModel.getAllComments().observe(getViewLifecycleOwner(), comments ->
-                    commentsViewModel.getCommentsOfPost(postID, comments1 -> {
-                        adapter.notifyDataSetChanged();
-                        progressBar.setVisibility(View.GONE);
-                        swipeRefreshLayout.setRefreshing(false);
-                    }));
+                    commentsViewModel.getCommentsOfPost(postID, comments1 ->
+                            adapter.notifyDataSetChanged()));
         }
     }
 
@@ -170,14 +160,14 @@ public class CommentsFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull RowViewHolder holder, int position) {
 
-            Comment c = commentsViewModel.getCurrent().get(position);
+            Comment c = commentsViewModel.getQuerySnapshot().get(position);
             Log.d("TAG", "onBindViewHolder " + position);
             holder.bind(c);
         }
 
         @Override
         public int getItemCount() {
-            List<Comment> comments = commentsViewModel.getCurrent();
+            List<Comment> comments = commentsViewModel.getQuerySnapshot();
             if (comments == null) return 0;
             return comments.size();
         }
