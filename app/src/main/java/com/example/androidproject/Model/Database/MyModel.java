@@ -44,8 +44,8 @@ public class MyModel {
         usersLoadingState = new MutableLiveData<>(UserLoadingState.loaded);
         postsLoadingState = new MutableLiveData<>(PostLoadingState.loaded);
         commentsLoadingState = new MutableLiveData<>(CommentLoadingState.loaded);
-        commentsLoadingState.observeForever(comments ->
-                Log.d("TAG3", "changed to: " + commentsLoadingState.getValue()));
+        usersLoadingState.observeForever(comments ->
+                Log.d("TAG3", "changed to: " + usersLoadingState.getValue()));
         local = new LocalDataBase();
         allPosts = local.getAllPosts();
         allComments = local.getAllComments();
@@ -172,10 +172,11 @@ public class MyModel {
     }
 
     public void getUserByID(String username, GetUserListener listener) {
-        executor.execute(() -> {
+        usersLoadingState.setValue(UserLoadingState.loading);
+        getUsersFromRemote(()->executor.execute(() -> {
             User u = local.getByUserName(username);
             MyApplication.mainHandler.post(() -> listener.onComplete(u));
-        });
+        }));
     }
 
     public void getCommentByID(String commentID, GetCommentListener listener) {
@@ -201,6 +202,7 @@ public class MyModel {
         Long localLastUpdate = Post.getLocalLastUpdateTime();
         MyModelFirebase.getAllPosts(localLastUpdate, posts ->
                 executor.execute(() -> {
+                    Log.d("TAG3","(posts) fetched "+posts.size()+" items");
                     Long lastUpdate = 0L;
                     for (Post p : posts) {
                         if (p.isDeleted()) {
@@ -211,11 +213,11 @@ public class MyModel {
                         if (lastUpdate < p.getLastUpdated())
                             lastUpdate = p.getLastUpdated();
                     }
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+//                    try {
+//                        Thread.sleep(2000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
                     Post.setLocalLastUpdateTime(lastUpdate);
                     MyApplication.mainHandler.post(() -> {
                         actionComplete.onComplete();
@@ -229,6 +231,7 @@ public class MyModel {
         Long localLastUpdate = User.getLocalLastUpdateTime();
         MyModelFirebase.getAllUsers(localLastUpdate, users ->
                 executor.execute(() -> {
+                    Log.d("TAG3","(users) fetched "+users.size()+" items");
                     Long lastUpdate = 0L;
                     for (User user : users) {
                         if (user.isDeleted()) {
@@ -241,11 +244,11 @@ public class MyModel {
                         if (lastUpdate < user.getLastUpdated())
                             lastUpdate = user.getLastUpdated();
                     }
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+//                    try {
+//                        Thread.sleep(2000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
                     User.setLocalLastUpdateTime(lastUpdate);
                     MyApplication.mainHandler.post(() -> {
                         actionComplete.onComplete();
@@ -259,6 +262,7 @@ public class MyModel {
         Long localLastUpdate = Comment.getLocalLastUpdateTime();
         MyModelFirebase.getAllComments(localLastUpdate, comments ->
                 executor.execute(() -> {
+                    Log.d("TAG3","(comments) fetched "+comments.size()+" items");
                     Long lastUpdate = 0L;
                     for (Comment comment : comments) {
                         if (comment.isDeleted()) {
@@ -269,11 +273,11 @@ public class MyModel {
                         if (lastUpdate < comment.getLastUpdated())
                             lastUpdate = comment.getLastUpdated();
                     }
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+//                    try {
+//                        Thread.sleep(2000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
                     Comment.setLocalLastUpdateTime(lastUpdate);
                     MyApplication.mainHandler.post(() -> {
                         actionComplete.onComplete();

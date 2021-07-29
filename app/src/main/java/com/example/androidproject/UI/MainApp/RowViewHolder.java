@@ -53,6 +53,7 @@ class RowViewHolder extends RecyclerView.ViewHolder {
         content.setText(b.getContent());
         photo.setImageResource(R.drawable.ic_launcher_background);
         if (b.getPhoto() != null && !b.getPhoto().equals("")) {
+            photo.setVisibility(View.VISIBLE);
             Picasso.get().load(b.getPhoto()).placeholder(R.drawable.ic_launcher_background).error(R.drawable.ic_launcher_background).into(photo);
         } else {
             photo.setVisibility(View.GONE);

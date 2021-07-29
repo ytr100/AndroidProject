@@ -53,6 +53,7 @@ public class EditFragment extends Fragment {
         content = root.findViewById(R.id.edit_content);
         Button save = root.findViewById(R.id.edit_save);
         photo = root.findViewById(R.id.edit_image);
+        photo.setVisibility(View.GONE);
         ImageButton takePic = root.findViewById(R.id.edit_picture_btn);
         takePic.setOnClickListener(v -> dispatchTakePictureIntent());
         ProgressBar progressBar = root.findViewById(R.id.edit_progressBar);
@@ -203,6 +204,7 @@ public class EditFragment extends Fragment {
             Bundle extras = data.getExtras();
             imageBitmap = (Bitmap) extras.get("data");
             photo.setImageBitmap(imageBitmap);
+            photo.setVisibility(View.VISIBLE);
         }
     }
 
@@ -220,16 +222,22 @@ public class EditFragment extends Fragment {
                     title.setText(post.getPostMessage().getTitle());
                     content.setText(post.getContent());
                     //progressBar.setVisibility(View.GONE);
-                    if (post.getPhoto() != null && !post.getPhoto().equals(""))
+                    if (post.getPhoto() != null && !post.getPhoto().equals("")){
+                        photo.setVisibility(View.VISIBLE);
                         Picasso.get().load(post.getPhoto()).placeholder(R.drawable.ic_launcher_background).into(photo);
+                    }
+
                 });
             } else {//edit comment
                 editViewModel.getComment(commentID, comment -> {
                     title.setText(comment.getCommentMessage().getTitle());
                     content.setText(comment.getContent());
                     //progressBar.setVisibility(View.GONE);
-                    if (comment.getPhoto() != null && !comment.getPhoto().equals(""))
+                    if (comment.getPhoto() != null && !comment.getPhoto().equals("")){
+                        photo.setVisibility(View.VISIBLE);
                         Picasso.get().load(comment.getPhoto()).placeholder(R.drawable.ic_launcher_background).into(photo);
+                    }
+
                 });
             }
         }
